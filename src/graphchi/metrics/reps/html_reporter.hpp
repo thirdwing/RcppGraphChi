@@ -83,7 +83,7 @@ namespace graphchi {
                     for(it = entries.begin(); it != entries.end(); ++it) {
                         metrics_entry ent = it->second;
                         switch(ent.valtype) {
-                            case INTEGER:
+                            case INTEGER_G:
                                 if (round == 0) {   
                                     if (c++ == 0)
                                         fprintf(f, "<table><tr><th>Key</th><th>Value</th><th>Count</th><th>Min</th><th>Max</th><th>Average</th></tr>");
@@ -100,7 +100,7 @@ namespace graphchi {
                                      fprintf(f, "</tr>");
                                 }
                                 break;
-                            case REAL:
+                            case REAL_G:
                                if (round == 0) {   
                                     if (c++ == 0)
                                         fprintf(f, "<table><tr><th>Key</th><th>Value</th><th>Count</th><th>Min</th><th>Max</th><th>Average</th></tr>");
@@ -110,7 +110,7 @@ namespace graphchi {
                                     if (c++ == 0) 
                                          fprintf(f, "<table><tr><th>Key</th><th>Value (sec)</th><th>Count</th><th>Min (sec)</th><th>Max (sec)</th><th>Average (sec)</th></tr>\n");
                                 }
-                                if ((round == 0 && ent.valtype == REAL)||(round == 1 && ent.valtype == TIME)) {
+                                if ((round == 0 && ent.valtype == REAL_G)||(round == 1 && ent.valtype == TIME)) {
                                     fprintf(f, "<tr><td>%s</td>\n",  it->first.c_str());
                                     
                                     fprintf(f, "<td>%lf</td>\n",  ent.value);

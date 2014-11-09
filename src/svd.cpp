@@ -3,15 +3,16 @@
 #include "toolkits/collaborative_filtering/types.hpp"
 #include "toolkits/collaborative_filtering/eigen_wrapper.hpp"
 #include "toolkits/collaborative_filtering/timer.hpp"
+
+#include <RcppEigen.h>
+
 using namespace std;
 
 #define GRAPHCHI_DISABLE_COMPRESSION
-int nshards;
-int nconv = 0;
+
 /* Metrics object for keeping track of performance counters
      and other information. Currently required. */
 metrics m("svd-inmemory-factors");
-vec singular_values;
 
 struct vertex_data
 {
@@ -49,54 +50,9 @@ std::vector<vertex_data> latent_factors_inmem;
 #include "toolkits/collaborative_filtering/io.hpp"
 #include "toolkits/collaborative_filtering/rmse.hpp"
 #include "toolkits/collaborative_filtering/rmse_engine.hpp"
-
-/** compute a missing value based on SVD algorithm */
-float svd_predict(const vertex_data& user,
-                  const vertex_data& movie,
-                  const float rating,
-                  double & prediction,
-                  void * extra = NULL)
-{
-
-    Eigen::DiagonalMatrix<double, Eigen::Dynamic> diagonal_matrix(nconv);
-    diagonal_matrix.diagonal() = singular_values;
-
-    prediction = user.pvec.head(nconv).transpose() * diagonal_matrix * movie.pvec.head(nconv);
-    //truncate prediction to allowed values
-    prediction = std::min((double)prediction, maxval);
-    prediction = std::max((double)prediction, minval);
-    //return the squared error
-    float err = rating - prediction;
-    assert(!std::isnan(err));
-    return err*err;
-
-}
-
-/**
- *
- *  Implementation of the Lanczos algorithm, as given in:
- *  http://en.wikipedia.org/wiki/Lanczos_algorithm
- *
- *  Code written by Danny Bickson, CMU, June 2011
- * */
-
-//LANCZOS VARIABLES
-int max_iter = 10;
-int actual_vector_len;
-int nv = 0;
-int nsv = 0;
-double tol = 1e-8;
-bool finished = false;
-int ortho_repeats = 3;
-bool save_vectors = false;
-std::string format = "matrixmarket";
-int nodes = 0;
-
-int data_size = max_iter;
-
 #include "toolkits/collaborative_filtering/math.hpp"
 
-void init_lanczos(bipartite_graph_descriptor & info)
+void init_lanczos(bipartite_graph_descriptor & info, int & data_size, int & nsv, int & nv, int & max_iter, int & actual_vector_len)
 {
     srand48(time(NULL));
     latent_factors_inmem.resize(info.total());
@@ -109,19 +65,13 @@ void init_lanczos(bipartite_graph_descriptor & info)
     {
         latent_factors_inmem[i].pvec = zeros(actual_vector_len);
     }
-    logstream(LOG_INFO)<<"Allocated a total of: " << ((double)actual_vector_len * info.total() * sizeof(double)/ 1e6) << " MB for storing vectors." << std::endl;
+    
 }
 
-void output_svd_result(std::string filename)
-{
-    MMOutputter_mat<vertex_data> user_mat(filename + "_U.mm", 0, M , "This file contains SVD output matrix U. In each row nconv factors of a single user node.", latent_factors_inmem, nconv);
-    MMOutputter_mat<vertex_data> item_mat(filename + "_V.mm", M  ,M+N, "This file contains SVD  output matrix V. In each row nconv factors of a single item node.", latent_factors_inmem, nconv);
-    logstream(LOG_INFO) << "SVD output files (in matrix market format): " << filename << "_U.mm" <<
-                        ", " << filename + "_V.mm " << std::endl;
-}
 
 vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
-             const std::string & vecfile)
+             const std::string & vecfile, int & nconv, int & data_size, int & nv, 
+             int & nsv, int & max_iter, double & tol, bool &finished)
 {
 
     int its = 1;
@@ -140,8 +90,8 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
     while(nconv < nsv && its < max_iter)
     {
-
-        std::cout<<"Starting iteration: " << its << " at time: " << mytimer.current_time() << std::endl;
+        Rcpp::Rcout<<"Starting iteration: " << its << " at time: " << mytimer.current_time() << std::endl;
+        
         int k = nconv;
         int n = nv;
 
@@ -154,7 +104,7 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
         for (int i=k+1; i<n; i++)
         {
-            std::cout <<"Starting step: " << i << " at time: " << mytimer.current_time() <<  std::endl;
+            Rcpp::Rcout <<"Starting step: " << i << " at time: " << mytimer.current_time() <<  std::endl;
 
             V[i]=U[i-1]*A;
             orthogonalize_vs_all(V, i, beta(i-k-1));
@@ -214,7 +164,6 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
         vec v;
         if (!finished)
         {
-
             vec swork=get_col(PT,kk);
 
             v = zeros(size(A,1));
@@ -228,13 +177,11 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
         //compute the ritz eigenvectors of the converged singular triplets
         if (kk > 0)
         {
-
             mat tmp= V.get_cols(nconv,nconv+n)*PT;
             V.set_cols(nconv, nconv+kk, get_cols(tmp, 0, kk));
 
             tmp= U.get_cols(nconv, nconv+n)*a;
             U.set_cols(nconv, nconv+kk,get_cols(tmp,0,kk));
-
         }
 
         nconv=nconv+kk;
@@ -248,8 +195,8 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
     } // end(while)
 
-    printf(" Number of computed signular values %d",nconv);
-    printf("\n");
+	Rcpp::Rcout << "Number of computed signular values: " << nconv << std::endl;
+	
     DistVec normret(info, nconv, false, "normret");
     DistVec normret_tranpose(info, nconv, true, "normret_tranpose");
 
@@ -267,62 +214,70 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
         {
             err = err/sigma(i);
         }
-
-        printf("Singular value %d \t%13.6g\tError estimate: %13.6g\n", i, sigma(i),err);
+		
     }
 
     return sigma;
 }
 
-#include <Rcpp.h>
+
 
 // [[Rcpp::export]]
-void large_svd()
+Eigen::VectorXd large_svd(std::string matrix_file)
 {
+    int nshards;
+    int nconv = 0;
+
+    vec singular_values;
+
+	//LANCZOS VARIABLES
+    int max_iter = 5;
+    int actual_vector_len;
+    int nv = 5;
+    int nsv = 3;
+    double tol = 1e-1;
+    bool finished = false;
+    int ortho_repeats = 3;
+    bool save_vectors = false;
+    std::string format = "matrixmarket";
+    int nodes = 0;
+    int data_size = max_iter;
+
 
     graphchi_init();
 
     std::string vecfile = "";
-    debug         = 0;
-    ortho_repeats = 3;
-    nv = 5;
-    nsv = 3;
-    tol = 1e-1;
-    save_vectors = 0;
-    max_iter = 5;
+    debug = 0;
 
     global_logger().set_log_level(LOG_WARNING);
 
     if (nv < nsv)
     {
-        std::cout <<"Please set the number of vectors --nv=XX, to be at least the number of support vectors --nsv=XX or larger" << std::endl;
-        exit(1);
+        Rcpp::stop("Please set the number of vectors to be at least the number of support vectors!\n");
+        
     }
 
-    training = "smallnetflix_mm";
-    std::cout << "Load matrix " << training << std::endl;
+    training = matrix_file;
 
     /* Preprocess data if needed, or discover preprocess files */
     if (tokens_per_row == 3 || tokens_per_row == 2)
         nshards = convert_matrixmarket<EdgeDataType>(training,0,0,tokens_per_row);
-
-    else logstream(LOG_FATAL)<<"--tokens_per_row=XX should be either 2 or 3 input columns" << std::endl;
-
+    else
+		Rcpp::stop("--tokens_per_row should be either 2 or 3 input columns\n");
 
     info.rows = M;
     info.cols = N;
     info.nonzeros = L;
-    assert(info.rows > 0 && info.cols > 0 && info.nonzeros > 0);
 
     timer mytimer;
     mytimer.start();
-    init_lanczos(info);
+    init_lanczos(info, data_size, nsv, nv, max_iter, actual_vector_len);
     init_math(info, ortho_repeats);
 
     //read initial vector from file (optional)
     if (vecfile.size() > 0)
     {
-        std::cout << "Load inital vector from file" << vecfile << std::endl;
+        Rcpp::Rcout << "Load inital vector from file" << vecfile << std::endl;
         load_matrix_market_vector(vecfile, 0, true, false);
     }
 
@@ -331,13 +286,10 @@ void large_svd()
     pengine = &engine;
 
     vec errest;
-    singular_values = lanczos(info, mytimer, errest, vecfile);
+    singular_values = lanczos(info, mytimer, errest, vecfile, nconv, data_size, nv, nsv, max_iter, tol, finished);
     singular_values.conservativeResize(nconv);
-    std::cout << "Lanczos finished " << mytimer.current_time() << std::endl;
+    Rcpp::Rcout << "Lanczos finished, time used: " << mytimer.current_time() << std::endl;
 
-    write_output_vector(training + ".singular_values", singular_values,false, "%GraphLab SVD Solver library. This file contains the singular values.");
-
+	return singular_values;
 
 }
-
-

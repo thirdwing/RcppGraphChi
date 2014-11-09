@@ -64,8 +64,8 @@ namespace graphchi {
         for(it = entries.begin(); it != entries.end(); ++it) {
           metrics_entry ent = it->second;
           switch(ent.valtype) {
-          case REAL:
-          case INTEGER:
+          case REAL_G:
+          case INTEGER_G:
             if (round == 0) {
               if (c++ == 0) std::cout << "[Numeric]" << std::endl; 
               std::cout << it->first << ":\t\t";

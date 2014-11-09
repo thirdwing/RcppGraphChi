@@ -68,7 +68,7 @@ namespace graphchi {
           for(it = entries.begin(); it != entries.end(); ++it) {
               metrics_entry ent = it->second;
               switch(ent.valtype) {
-                  case INTEGER:
+                  case INTEGER_G:
                       
                       fprintf(f, "%s.%s=%ld\n", ident.c_str(), it->first.c_str(), (long int) (ent.value));
                       fprintf(f, "%s.%s.count=%lu\n", ident.c_str(), it->first.c_str(), ent.count);
@@ -76,7 +76,7 @@ namespace graphchi {
                       fprintf(f, "%s.%s.max=%ld\n", ident.c_str(), it->first.c_str(), (long int) (ent.maxvalue));
                       fprintf(f, "%s.%s.avg=%lf\n", ident.c_str(), it->first.c_str(), ent.cumvalue/ent.count);
                       break;
-                  case REAL:
+                  case REAL_G:
                   case TIME:
                       fprintf(f, "%s.%s=%lf\n", ident.c_str(), it->first.c_str(),  (ent.value));
                       fprintf(f, "%s.%s.count=%lu\n", ident.c_str(), it->first.c_str(), ent.count);

@@ -43,7 +43,7 @@
 namespace graphchi {
 
      
-  enum metrictype {REAL, INTEGER, TIME, STRING, VECTOR};
+  enum metrictype {REAL_G, INTEGER_G, TIME, STRING, VECTOR};
     
   // Data structure for storing metric entries
   // NOTE: This data structure is not very optimal, should
@@ -187,7 +187,7 @@ namespace graphchi {
     /**
      * Add to an existing value or create new.
      */
-    inline void add(std::string key, double value, metrictype type = REAL) {
+    inline void add(std::string key, double value, metrictype type = REAL_G) {
         mlock.lock();
       if (entries.count(key) == 0) {
         entries[key] = metrics_entry(value, type);
@@ -213,15 +213,15 @@ namespace graphchi {
     }
     
     inline void set(std::string key, size_t value) {
-      set(key, (double)value, INTEGER);
+      set(key, (double)value, INTEGER_G);
     }
         
       
       inline void set(std::string key, int value) {
-          set(key, (double)value, INTEGER);
+          set(key, (double)value, INTEGER_G);
       }  
       
-    inline void set(std::string key, double value, metrictype type = REAL) {
+    inline void set(std::string key, double value, metrictype type = REAL_G) {
       if (entries.count(key) == 0) {
         entries[key] = metrics_entry(value, type);
       } else {
@@ -231,7 +231,7 @@ namespace graphchi {
     
     inline void set_integer(std::string key, size_t value) {
       if (entries.count(key) == 0) {
-        entries[key] = metrics_entry((double)value, INTEGER);
+        entries[key] = metrics_entry((double)value, INTEGER_G);
       } else {
         entries[key].set((double)value);
       }
