@@ -3,27 +3,29 @@
 \alias{RcppGraphChi}
 \docType{package}
 \title{
-What the package does (short line)
+R interface to GraphChi
 }
 \description{
-More about what it does (maybe more than one line)
-~~ A concise (1-5 lines) description of the package ~~
+GraphChi can run very large graph computations on just a single machine,
+by using a novel algorithm for processing the graph from disk (SSD or hard drive). 
+In some cases GraphChi can solve bigger problems in reasonable time than many other available *distributed* frameworks.
+RcppGraphChi provides the R interface to GraphChi through Rcpp and RcppEigen.
 }
 \details{
 \tabular{ll}{
 Package: \tab RcppGraphChi\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
+Version: \tab 0.0.1\cr
 Date: \tab 2014-11-05\cr
-License: \tab What Licence is it under ?\cr
+License: \tab GPL-3\cr
 }
 ~~ An overview of how to use the package, including the most important ~~
 ~~ functions ~~
 }
 \author{
-Who wrote it
+Qiang Kou
 
-Maintainer: Who to complain to <yourfault@somewhere.net>
+Maintainer: Qiang Kou <qkou@umail.iu.edu>
 }
 \references{
 ~~ Literature or other references for background information ~~
