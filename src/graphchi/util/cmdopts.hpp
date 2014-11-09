@@ -62,10 +62,7 @@ namespace graphchi {
     static std::string VARIABLE_IS_NOT_USED get_config_option_string(const char *option_name) {
         if (conf.find(option_name) != conf.end()) {
             return conf[option_name];
-        } else {
-            std::cout << "ERROR: could not find option " << option_name << " from config.";
-            assert(false);
-        }
+        } 
     }
     
     static  std::string VARIABLE_IS_NOT_USED get_config_option_string(const char *option_name,
@@ -109,16 +106,16 @@ namespace graphchi {
         }
     }
     
-    static void set_argc(int argc, const char ** argv);
-    static void set_argc(int argc, const char ** argv) {
-        _argc = argc;
-        _argv = (char**)argv;
+    static void set_argc();
+    static void set_argc() {
+        //_argc = argc;
+        //_argv = (char**)argv;
         _cmd_configured = true;
         conf = loadconfig(filename_config_local(), filename_config());
         
         /* Load --key=value type arguments into the conf map */
-        std::string prefix = "--";
-        for (int i = 1; i < argc; i++) {
+        //std::string prefix = "--";
+        /*for (int i = 1; i < argc; i++) {
             std::string arg = std::string(_argv[i]);
             
             if (arg.substr(0, prefix.size()) == prefix) {
@@ -132,13 +129,13 @@ namespace graphchi {
                     conf[key] = val;
                 }
             }
-        }
+        }*/
 
     }
     
-    static void graphchi_init(int argc, const char ** argv);
-    static void graphchi_init(int argc, const char ** argv) {
-        set_argc(argc, argv);
+    static void graphchi_init();
+    static void graphchi_init() {
+        set_argc();
             }
     
     static void check_cmd_init() {

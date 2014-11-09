@@ -32,8 +32,8 @@
 #ifndef GRAPHCHI_PROGRAM_DEF
 #define GRAPHCHI_PROGRAM_DEF
 
-#include "api/graph_objects.hpp"
-#include "api/graphchi_context.hpp"
+#include "graphchi/api/graph_objects.hpp"
+#include "graphchi/api/graphchi_context.hpp"
 
 namespace graphchi {
     

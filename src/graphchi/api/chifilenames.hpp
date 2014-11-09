@@ -43,8 +43,8 @@
 #include <vector>
 #include <sys/stat.h>
 
-#include "graphchi_types.hpp"
-#include "logger/logger.hpp"
+#include "graphchi/graphchi_types.hpp"
+#include "graphchi/logger/logger.hpp"
 
 #ifdef DYNAMICEDATA
 #include "shards/dynamicdata/dynamicblock.hpp"

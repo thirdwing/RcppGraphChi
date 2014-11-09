@@ -81,7 +81,10 @@ namespace graphchi {
      * @param secondary_filename secondary filename if the first version is not found.
      */
     static std::map<std::string, std::string> loadconfig(std::string filename, std::string secondary_filename) {
-        FILE * f = fopen(filename.c_str(), "r");
+		
+		
+		
+        /*FILE * f = fopen(filename.c_str(), "r");
         if (f == NULL) {
             f = fopen(secondary_filename.c_str(), "r");
             if (f == NULL) {
@@ -89,13 +92,25 @@ namespace graphchi {
                 std::cout << "Please define environment variable GRAPHCHI_ROOT or run the program from that directory." << std::endl;
             }
             assert(f != NULL);
-        }
+        }*/
         
         char s[4096];
         std::map<std::string, std::string> conf;
+        conf["loadthreads"] = "4";
+        conf["niothreads"] = "2";
+		conf["membudget_mb"] = "800";
+		conf["cachesize_mb"] = "0";
+
+		conf["io.blocksize"] = "1048576";
+		conf["mmap"] = "0  # Use mmaped files where applicable";
+
+		conf["metrics.reporter"] = "console,file,html";
+		conf["metrics.reporter.filename"] = "graphchi_metrics.txt";
+		conf["metrics.reporter.htmlfile"] = "graphchi_metrics.html";
+        
         
         // I like C parsing more than C++, that is why this is such a mess
-        while(fgets(s, 4096, f) != NULL) {
+        /*while(fgets(s, 4096, f) != NULL) {
             _FIXLINE(s);
             if (s[0] == '#') continue; // Comment
             if (s[0] == '%') continue; // Comment
@@ -110,9 +125,10 @@ namespace graphchi {
             if (ckey != NULL && cval != NULL) {
                 std::string key = trim(std::string(ckey));
                 std::string val = trim(std::string(cval));
+                std::cout << key << "\t" << val << std::endl;
                 conf[key] = val;
             }
-        }
+        }*/
         
         
         return conf;

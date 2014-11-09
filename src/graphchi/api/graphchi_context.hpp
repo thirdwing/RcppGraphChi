@@ -37,8 +37,8 @@
 #include <omp.h>
 #include <sys/time.h>
 
-#include "graphchi_types.hpp"
-#include "api/ischeduler.hpp"
+#include "graphchi/graphchi_types.hpp"
+#include "ischeduler.hpp"
 
 namespace graphchi {
     

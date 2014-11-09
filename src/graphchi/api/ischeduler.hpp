@@ -30,8 +30,8 @@
 #ifndef DEF_GRAPHCHI_ISCHEDULER
 #define DEF_GRAPHCHI_ISCHEDULER
 
-#include "graphchi_types.hpp"
-#include "logger/logger.hpp"
+#include "graphchi/graphchi_types.hpp"
+#include "graphchi/logger/logger.hpp"
 
 namespace graphchi {
     
