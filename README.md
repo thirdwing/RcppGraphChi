@@ -1,6 +1,8 @@
 RcppGraphChi: R interface to GraphChi
 ============
 
+[![Build Status](https://travis-ci.org/thirdwing/RcppGraphChi.svg?branch=master)](https://travis-ci.org/thirdwing/RcppGraphChi)
+
 **This package is in very beginning stage (Just one SVD function). Much more work should be done before release.**
 
 GraphChi is a spin-off of the [GraphLab]( http://www.graphlab.org )-project from the Carnegie Mellon University.
