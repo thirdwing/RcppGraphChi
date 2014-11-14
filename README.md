@@ -1,7 +1,7 @@
 RcppGraphChi: R interface to GraphChi
 ============
 
-**This package is in very beginning stage. Much more work before release.**
+**This package is in very beginning stage (Just one SVD function). Much more work should be done before release.**
 
 GraphChi is a spin-off of the [GraphLab]( http://www.graphlab.org )-project from the Carnegie Mellon University.
 It is based on research by [Aapo Kyrola]( http://www.cs.cmu.edu/~akyrola/) and his advisors. 
