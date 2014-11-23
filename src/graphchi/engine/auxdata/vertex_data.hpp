@@ -42,6 +42,8 @@
 #include <assert.h>
 #include <sys/mman.h>
 
+#include <Rcpp.h>
+
 #include "graphchi_types.hpp"
 #include "api/chifilenames.hpp"
 #include "io/stripedio.hpp"
@@ -93,7 +95,7 @@ namespace graphchi {
             last_nvertices = 0;
             use_mmap = get_option_int("mmap", 0);  // Whether to mmap the degree file to memory
             if (use_mmap) {
-                logstream(LOG_INFO) << "Use memory mapping for vertex data." << std::endl;
+                Rcpp::Rcout << "Use memory mapping for vertex data." << std::endl;
                 check_size(nvertices);
             } else {
                 check_size(nvertices);
@@ -110,7 +112,7 @@ namespace graphchi {
                     iomgr->managed_release(filedesc, &loaded_chunk);
                 }
             } else {
-                logstream(LOG_INFO) << "Syncing vertex data..." << std::endl;
+                Rcpp::Rcout << "Syncing vertex data..." << std::endl;
                 msync(mmap_file, mmap_length, MS_SYNC);
                 munmap(mmap_file, mmap_length);
                 close(filedesc);

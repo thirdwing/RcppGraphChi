@@ -78,9 +78,9 @@ struct ValidationRMSEProgram4 : public GraphChiProgram<VertexDataType, EdgeDataT
   void after_iteration(int iteration, graphchi_context &gcontext) {
     assert(Le > 0);
     dvalidation_rmse = finalize_rmse(sum(validation_rmse_vec) , (double)Le);
-    std::cout<<"  Validation  " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << std::endl;
+    Rcpp::Rcout<<"  Validation  " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << std::endl;
   if (halt_on_rmse_increase > 0 && halt_on_rmse_increase < cur_iteration && dvalidation_rmse > last_validation_rmse){
-    logstream(LOG_WARNING)<<"Stopping engine because of validation RMSE increase" << std::endl;
+    Rcpp::Rcout<<"Stopping engine because of validation RMSE increase" << std::endl;
       converged_engine = true;
     }
   }
@@ -107,7 +107,7 @@ void run_validation4(graphchi_engine<VertexDataType, EdgeDataType> * pvalidation
    //no validation data, no need to run validation engine calculations
    cur_iteration = context.iteration;
    if (pvalidation_engine == NULL){
-     std::cout << std::endl;
+     Rcpp::Rcout << std::endl;
      return;
    }
    ValidationRMSEProgram4 program;
@@ -117,7 +117,7 @@ void run_validation4(graphchi_engine<VertexDataType, EdgeDataType> * pvalidation
 }
 
 void reset_rmse(int exec_threads){
-  logstream(LOG_DEBUG)<<"Detected number of threads: " << exec_threads << std::endl;
+  Rcpp::Rcerr<<"Detected number of threads: " << exec_threads << std::endl;
   num_threads = exec_threads;
   rmse_vec = zeros(exec_threads);
 }

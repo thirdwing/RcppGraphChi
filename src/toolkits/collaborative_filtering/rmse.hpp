@@ -109,7 +109,7 @@ void test_predictions(float (*prediction_func)(const vertex_data & user, const v
   read_matrix_market_banner_and_size(f, matcode, Me, Ne, nz, test+".predict");
 
   if ((M > 0 && N > 0 ) && (Me != M || Ne != N))
-    logstream(LOG_FATAL)<<"Input size of test matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
+    Rcpp::Rcerr<<"Input size of test matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
 
   if (avgprd && gcontext->iteration == pmf_burn_in)
     *avgprd = zeros(nz);
@@ -130,14 +130,14 @@ void test_predictions(float (*prediction_func)(const vertex_data & user, const v
     double val;
     int rc = fscanf(f, "%d %d %lg\n", &I, &J, &val);
     if (rc != 3)
-      logstream(LOG_FATAL)<<"Error when reading input test file, on data line " << i+2 << std::endl;
+      Rcpp::Rcerr<<"Error when reading input test file, on data line " << i+2 << std::endl;
     I--;  /* adjust from 1-based to 0-based */
     J--;
 
     if (I < 0 || (uint)I >= M)
-       logstream(LOG_FATAL)<<"Bad input " << I+1<< " in test file in line " << i+2<< " . First column should be in the range 1 to " << M << std::endl;
+       Rcpp::Rcerr<<"Bad input " << I+1<< " in test file in line " << i+2<< " . First column should be in the range 1 to " << M << std::endl;
     if (J < 0 || (uint)J >= N)
-       logstream(LOG_FATAL)<<"Bad input " << J+1<< " in test file in line " << i+2<< ". Second column should be in the range 1 to " << N << std::endl;
+       Rcpp::Rcerr<<"Bad input " << J+1<< " in test file in line " << i+2<< ". Second column should be in the range 1 to " << N << std::endl;
 
     if (!decide_if_edge_is_active(i, VALIDATION))
        continue;
@@ -160,7 +160,7 @@ void test_predictions(float (*prediction_func)(const vertex_data & user, const v
     fclose(fout);
 
   if (dosave)
-    std::cout<<"Finished writing " << test_ratings << " predictions to file: " << test << ".predict" << std::endl;
+    Rcpp::Rcout<<"Finished writing " << test_ratings << " predictions to file: " << test << ".predict" << std::endl;
 }
 
 void test_predictions3(float (*prediction_func)(const vertex_data & user, const vertex_data & movie, float rating, double & prediction, void * extra), int time_offset = 0) {
@@ -177,7 +177,7 @@ void test_predictions3(float (*prediction_func)(const vertex_data & user, const 
   read_matrix_market_banner_and_size(f, matcode, Me, Ne, nz, test+".predict");
 
   if ((M > 0 && N > 0 ) && (Me != M || Ne != N))
-    logstream(LOG_FATAL)<<"Input size of test matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
+    Rcpp::Rcerr<<"Input size of test matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
 
   mm_write_banner(fout, matcode);
   mm_write_mtx_crd_size(fout ,M,N,nz); 
@@ -189,9 +189,9 @@ void test_predictions3(float (*prediction_func)(const vertex_data & user, const 
     int time;
     int rc = fscanf(f, "%d %d %d %lg\n", &I, &J, &time, &val);
     if (rc != 4)
-      logstream(LOG_FATAL)<<"Error when reading input file: " << i << std::endl;
+      Rcpp::Rcerr<<"Error when reading input file: " << i << std::endl;
     if (time - input_file_offset < 0)
-      logstream(LOG_FATAL)<<"Error: we assume time values >= " << input_file_offset << std::endl;
+      Rcpp::Rcerr<<"Error: we assume time values >= " << input_file_offset << std::endl;
     I--;  /* adjust from 1-based to 0-based */
     J--;
     double prediction;
@@ -201,7 +201,7 @@ void test_predictions3(float (*prediction_func)(const vertex_data & user, const 
   fclose(f);
   fclose(fout);
 
-  logstream(LOG_INFO)<<"Finished writing " << nz << " predictions to file: " << test << ".predict" << std::endl;
+  Rcpp::Rcout<<"Finished writing " << nz << " predictions to file: " << test << ".predict" << std::endl;
 }
 
 float (*prediction_func)(const vertex_data & user, const vertex_data & movie, float rating, double & prediction, void * extra);
@@ -221,7 +221,7 @@ void validation_rmse(float (*prediction_func)(const vertex_data & user, const ve
   if (f == NULL)
     return;
   if ((M > 0 && N > 0) && (Me != M || Ne != N))
-    logstream(LOG_FATAL)<<"Input size of validation matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
+    Rcpp::Rcerr<<"Input size of validation matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
 
   Le = nz;
   if (avgprd != NULL && gcontext.iteration == 0)
@@ -241,9 +241,9 @@ void validation_rmse(float (*prediction_func)(const vertex_data & user, const ve
     else rc = fscanf(f, "%d %d %lg %lg\n", &I, &J, &time, &val);
 
     if (rc != tokens_per_row)
-      logstream(LOG_FATAL)<<"Error when reading input file on line: " << i << " . should have" << tokens_per_row << std::endl;
+      Rcpp::Rcerr<<"Error when reading input file on line: " << i << " . should have" << tokens_per_row << std::endl;
     if (val < minval || val > maxval)
-      logstream(LOG_FATAL)<<"Value is out of range: " << val << " should be: " << minval << " to " << maxval << std::endl;
+      Rcpp::Rcerr<<"Value is out of range: " << val << " should be: " << minval << " to " << maxval << std::endl;
     I--;  /* adjust from 1-based to 0-based */
     J--;
     double prediction;
@@ -254,10 +254,10 @@ void validation_rmse(float (*prediction_func)(const vertex_data & user, const ve
 
   assert(Le > 0);
   dvalidation_rmse = finalize_rmse(dvalidation_rmse , (double)Le);
-  std::cout<<"  Validation  " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << 
+  Rcpp::Rcout<<"  Validation  " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << 
     " ratings_per_sec: " << std::setw(10) << (gcontext.iteration*L/mytimer.current_time()) << std::endl;
   if (halt_on_rmse_increase > 0 && halt_on_rmse_increase < gcontext.iteration && dvalidation_rmse > last_validation_rmse){
-    logstream(LOG_WARNING)<<"Stopping engine because of validation RMSE increase" << std::endl;
+    Rcpp::Rcout<<"Stopping engine because of validation RMSE increase" << std::endl;
     gcontext.set_last_iteration(gcontext.iteration);
   }
 }
@@ -273,14 +273,14 @@ void validation_rmse3(float (*prediction_func)(const vertex_data & user, const v
   size_t nz;   
 
   if ((f = fopen(validation.c_str(), "r")) == NULL) {
-    std::cout<<std::endl;
+    Rcpp::Rcout<<std::endl;
     return; //missing validaiton data, nothing to compute
   }
 
   read_matrix_market_banner_and_size(f, matcode, Me, Ne, nz, validation);
   
   if ((M > 0 && N > 0) && (Me != M || Ne != N))
-    logstream(LOG_FATAL)<<"Input size of validation matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
+    Rcpp::Rcerr<<"Input size of validation matrix must be identical to training matrix, namely " << M << "x" << N << std::endl;
 
   Le = nz;
 
@@ -296,11 +296,11 @@ void validation_rmse3(float (*prediction_func)(const vertex_data & user, const v
     time -= time_offset;
 
     if (rc != 4)
-      logstream(LOG_FATAL)<<"Error when reading input file on line: " << i << " . should have 4 columns " << std::endl;
+      Rcpp::Rcerr<<"Error when reading input file on line: " << i << " . should have 4 columns " << std::endl;
     if (val < minval || val > maxval)
-      logstream(LOG_FATAL)<<"Value is out of range: " << val << " should be: " << minval << " to " << maxval << std::endl;
+      Rcpp::Rcerr<<"Value is out of range: " << val << " should be: " << minval << " to " << maxval << std::endl;
     if ((uint)time > K)
-      logstream(LOG_FATAL)<<"Third column value time should be smaller than " << K << " while observed " << time << " in line : " << i << std::endl;
+      Rcpp::Rcerr<<"Third column value time should be smaller than " << K << " while observed " << time << " in line : " << i << std::endl;
 
     I--;  /* adjust from 1-based to 0-based */
     J--;
@@ -311,9 +311,9 @@ void validation_rmse3(float (*prediction_func)(const vertex_data & user, const v
 
   assert(Le > 0);
   dvalidation_rmse = finalize_rmse(dvalidation_rmse , (double)Le);
-  std::cout<<"  Validation " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << std::endl;
+  Rcpp::Rcout<<"  Validation " << error_names[loss_type] << ":" << std::setw(10) << dvalidation_rmse << std::endl;
   if (halt_on_rmse_increase >= gcontext.iteration && dvalidation_rmse > last_validation_rmse){
-    logstream(LOG_WARNING)<<"Stopping engine because of validation RMSE increase" << std::endl;
+    Rcpp::Rcout<<"Stopping engine because of validation RMSE increase" << std::endl;
     gcontext.set_last_iteration(gcontext.iteration);
   }
 }
@@ -330,7 +330,7 @@ double training_rmse(int iteration, graphchi_context &gcontext, bool items = fal
   if (loss_type == AP)
     loss_type = SQUARE;
   ret = dtraining_rmse = finalize_rmse(dtraining_rmse, pengine->num_edges());
-  std::cout<< std::setw(10) << mytimer.current_time() << ") Iteration: " << std::setw(3) <<iteration<<" Training " << error_names[loss_type] << ":"<< std::setw(10)<< dtraining_rmse;
+  Rcpp::Rcout<< std::setw(10) << mytimer.current_time() << ") Iteration: " << std::setw(3) <<iteration<<" Training " << error_names[loss_type] << ":"<< std::setw(10)<< dtraining_rmse;
   loss_type = old_loss;
 
   return ret;

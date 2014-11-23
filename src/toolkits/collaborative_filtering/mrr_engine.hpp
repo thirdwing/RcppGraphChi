@@ -84,7 +84,7 @@ struct ValidationMRRProgram : public GraphChiProgram<VertexDataType, EdgeDataTyp
           if (known_likes.find(sorted_indices[i]) != known_likes.end())
           {
             if (debug && vertex.id() % 1000 == 0 ){
-               std::cout<<"User: "<< vertex.id() << " item: "<< sorted_indices[i] << " in position: " << i << " prediction: " << sorted_distances[i] << std::endl;
+               Rcpp::Rcout<<"User: "<< vertex.id() << " item: "<< sorted_indices[i] << " in position: " << i << " prediction: " << sorted_distances[i] << std::endl;
             }
             MRR = 1.0/(i+1);
             break;
@@ -112,13 +112,13 @@ struct ValidationMRRProgram : public GraphChiProgram<VertexDataType, EdgeDataTyp
   void after_iteration(int iteration, graphchi_context &gcontext)
   {
     double mrr = sum(mrr_vec) / sum(users_vec);
-    std::cout<<"  Validation MRR:" << std::setw(10) << mrr << std::endl;
+    Rcpp::Rcout<<"  Validation MRR:" << std::setw(10) << mrr << std::endl;
   }
 };
 
 void reset_mrr(int exec_threads)
 {
-  logstream(LOG_DEBUG)<<"Detected number of threads: " << exec_threads << std::endl;
+  Rcpp::Rcerr<<"Detected number of threads: " << exec_threads << std::endl;
   num_threads = exec_threads;
   mrr_vec = zeros(num_threads);
 }

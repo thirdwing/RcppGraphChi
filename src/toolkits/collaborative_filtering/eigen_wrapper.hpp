@@ -525,12 +525,12 @@ inline double get_nz_data(sparse_vec &v, int i){
 inline void print(sparse_vec & vec){
   int cnt = 0;
   FOR_ITERATOR(i, vec){
-    std::cout<<get_nz_index(vec, i)<<":"<< get_nz_data(vec, i) << " ";
+    Rcpp::Rcout<<get_nz_index(vec, i)<<":"<< get_nz_data(vec, i) << " ";
     cnt++;
     if (cnt >= 20)
       break;
   }
-  std::cout<<std::endl;
+  Rcpp::Rcout<<std::endl;
 }
 inline vec pow(const vec&v, int exponent){
   vec ret = vec(v.size());

@@ -44,8 +44,6 @@
 
 #include "engine/graphchi_engine.hpp"
 
-#include "logger/logger.hpp"
-
 #include "metrics/metrics.hpp"
 #include "metrics/reps/basic_reporter.hpp"
 #include "metrics/reps/file_reporter.hpp"
@@ -80,7 +78,7 @@ namespace graphchi {
                 html_reporter rep(get_option_string("metrics.reporter.htmlfile", "metrics.html"));
                 m.report(rep);
             } else {
-                logstream(LOG_WARNING) << "Could not find metrics reporter with name [" << repname << "], ignoring." << std::endl;
+                Rcpp::Rcout << "Could not find metrics reporter with name [" << repname << "], ignoring." << std::endl;
             }
             t = strtok(NULL, delims);
         }

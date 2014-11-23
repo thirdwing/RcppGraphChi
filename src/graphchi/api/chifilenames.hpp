@@ -43,8 +43,9 @@
 #include <vector>
 #include <sys/stat.h>
 
+#include <Rcpp.h>
+
 #include "graphchi/graphchi_types.hpp"
-#include "graphchi/logger/logger.hpp"
 
 #ifdef DYNAMICEDATA
 #include "shards/dynamicdata/dynamicblock.hpp"
@@ -122,7 +123,7 @@ namespace graphchi {
         std::string fname = edata_shardname + ".size";
         std::ifstream ifs(fname.c_str());
         if (!ifs.good()) {
-            logstream(LOG_FATAL) << "Could not load " << fname << ". Preprocessing forgotten?" << std::endl;
+			Rcpp::stop("Could not load files.\nPreprocessing forgotten?\n");
             assert(ifs.good());
         }
         ifs >> fsize;
@@ -230,14 +231,14 @@ namespace graphchi {
                     std::string sname = filename_shard_edata_block(
                                                                    filename_shard_edata<EdgeDataType>(base_filename, p, nshards_candidate), 0, blocksize);
                     if (!file_exists(sname)) {
-                        logstream(LOG_DEBUG) << "Missing directory file: " << sname << std::endl;
+                        Rcpp::Rcout << "Missing directory file: " << sname << std::endl;
                         success = false;
                         break;
                     }
                     
                     sname = filename_shard_adj(base_filename, p, nshards_candidate);
                     if (!file_exists(sname)) {
-                        logstream(LOG_DEBUG) << "Missing shard file: " << sname << std::endl;
+                        Rcpp::Rcout << "Missing shard file: " << sname << std::endl;
                         success = false;
                         break;
                     }
@@ -246,15 +247,15 @@ namespace graphchi {
                 // Check degree file
                 std::string degreefname = filename_degree_data(base_filename);
                 if (!file_exists(degreefname)) {
-                    logstream(LOG_ERROR) << "Missing degree file: " << degreefname << std::endl;
-                    logstream(LOG_ERROR) << "You need to preprocess (sharder) your file again!" << std::endl;
+                    Rcpp::Rcerr << "Missing degree file: " << degreefname << std::endl;
+                    Rcpp::Rcerr << "You need to preprocess (sharder) your file again!" << std::endl;
                     return 0;
                 }
                 
                 std::string intervalfname = filename_intervals(base_filename, nshards_candidate);
                 if (!file_exists(intervalfname)) {
-                    logstream(LOG_ERROR) << "Missing intervals file: " << intervalfname << std::endl;
-                    logstream(LOG_ERROR) << "You need to preprocess (sharder) your file again!" << std::endl;
+                    Rcpp::Rcerr << "Missing intervals file: " << intervalfname << std::endl;
+                    Rcpp::Rcerr << "You need to preprocess (sharder) your file again!" << std::endl;
                     return 0;
                 }
                 
@@ -262,14 +263,14 @@ namespace graphchi {
                     continue;
                 }
                 
-                logstream(LOG_INFO) << "Detected number of shards: " << nshards_candidate << std::endl;
-                logstream(LOG_INFO) << "To specify a different number of shards, use command-line parameter 'nshards'" << std::endl;
+                Rcpp::Rcout << "Detected number of shards: " << nshards_candidate << std::endl;
+                Rcpp::Rcout << "To specify a different number of shards, use command-line parameter 'nshards'" << std::endl;
                 return nshards_candidate;
             }
         }
         if (last_shard_num == start_num) {
-            logstream(LOG_WARNING) << "Could not find shards with nshards = " << start_num << std::endl;
-            logstream(LOG_WARNING) << "Please define 'nshards 0' or 'nshards auto' to automatically detect." << std::endl;
+            Rcpp::Rcout << "Could not find shards with nshards = " << start_num << std::endl;
+            Rcpp::Rcout << "Please define 'nshards 0' or 'nshards auto' to automatically detect." << std::endl;
         }
         return 0;
     }
@@ -285,12 +286,12 @@ namespace graphchi {
 #else
         typedef EdgeDataType_ EdgeDataType;
 #endif
-        logstream(LOG_DEBUG) << "Deleting files for " << base_filename << " shards=" << nshards << std::endl;
+        Rcpp::Rcout << "Deleting files for " << base_filename << " shards=" << nshards << std::endl;
         std::string intervalfname = filename_intervals(base_filename, nshards);
         if (file_exists(intervalfname)) {
             int err = remove(intervalfname.c_str());
-            if (err != 0) logstream(LOG_ERROR) << "Error removing file " << intervalfname
-                << ", " << strerror(errno) << std::endl;
+            if (err != 0) 
+				Rcpp::Rcout << "Error removing file " << intervalfname << ", " << strerror(errno) << std::endl;
             
         }
         /* Note: degree file is not removed, because same graph with different number
@@ -309,15 +310,15 @@ namespace graphchi {
             std::string fsizename = filename_edata + ".size";
             if (file_exists(fsizename)) {
                 int err = remove(fsizename.c_str());
-                if (err != 0) logstream(LOG_ERROR) << "Error removing file " << fsizename
-                    << ", " << strerror(errno) << std::endl;
+                if (err != 0) 
+					Rcpp::Rcerr << "Error removing file " << fsizename << ", " << strerror(errno) << std::endl;
             }
             while(true) {
                 std::string block_filename = filename_shard_edata_block(filename_edata, blockid, blocksize);
                 if (file_exists(block_filename)) {
                     int err = remove(block_filename.c_str());
-                    if (err != 0) logstream(LOG_ERROR) << "Error removing file " << block_filename
-                        << ", " << strerror(errno) << std::endl;
+                    if (err != 0) 
+						Rcpp::Rcerr << "Error removing file " << block_filename << ", " << strerror(errno) << std::endl;
                     
                 } else {
                     
@@ -331,27 +332,27 @@ namespace graphchi {
             std::string dirname = dirname_shard_edata_block(filename_edata, blocksize);
             if (file_exists(dirname)) {
                 int err = remove(dirname.c_str());
-                if (err != 0) logstream(LOG_ERROR) << "Error removing directory " << dirname
-                    << ", " << strerror(errno) << std::endl;
+                if (err != 0) 
+					Rcpp::Rcout << "Error removing directory " << dirname << ", " << strerror(errno) << std::endl;
                 
             }
             
             std::string adjname = filename_shard_adj(base_filename, p, nshards);
-            logstream(LOG_DEBUG) << "Deleting " << adjname << " exists: " << file_exists(adjname) << std::endl;
+            Rcpp::Rcout << "Deleting " << adjname << " exists: " << file_exists(adjname) << std::endl;
             
             if (file_exists(adjname)) {
                 int err = remove(adjname.c_str());
-                if (err != 0) logstream(LOG_ERROR) << "Error removing file " << adjname
-                    << ", " << strerror(errno) << std::endl;
+                if (err != 0) 
+					Rcpp::Rcout << "Error removing file " << adjname << ", " << strerror(errno) << std::endl;
             }
             
             std::string idxname = filename_shard_adjidx(adjname);
-            logstream(LOG_DEBUG) << "Deleting " << idxname << " exists: " << file_exists(idxname) << std::endl;
+            Rcpp::Rcout << "Deleting " << idxname << " exists: " << file_exists(idxname) << std::endl;
             
             if (file_exists(idxname)) {
                 int err = remove(idxname.c_str());
-                if (err != 0) logstream(LOG_ERROR) << "Error removing file " << idxname
-                    << ", " << strerror(errno) << std::endl;
+                if (err != 0) 
+					Rcpp::Rcerr << "Error removing file " << idxname << ", " << strerror(errno) << std::endl;
             }
 
         }
@@ -359,16 +360,16 @@ namespace graphchi {
         std::string numv_filename = base_filename + ".numvertices";
         if (file_exists(numv_filename)) {
             int err = remove(numv_filename.c_str());
-            if (err != 0) logstream(LOG_ERROR) << "Error removing file " << numv_filename
-                << ", " << strerror(errno) << std::endl;
+            if (err != 0) 
+				Rcpp::Rcout << "Error removing file " << numv_filename << ", " << strerror(errno) << std::endl;
         }
         
         /* Degree file */
         std::string deg_filename = filename_degree_data(base_filename);
         if (file_exists(deg_filename)) {
             int err = remove(deg_filename.c_str());
-            if (err != 0) logstream(LOG_ERROR) << "Error removing file " << deg_filename
-                << ", " << strerror(errno) << std::endl;
+            if (err != 0) 
+				Rcpp::Rcout << "Error removing file " << deg_filename << ", " << strerror(errno) << std::endl;
         }
     }
     
@@ -383,7 +384,7 @@ namespace graphchi {
         
         if (!intervalsF.good()) {
             if (allowfail) return; // Hack
-            logstream(LOG_ERROR) << "Could not load intervals-file: " << intervalsFilename << std::endl;
+            Rcpp::Rcerr << "Could not load intervals-file: " << intervalsFilename << std::endl;
         }
         assert(intervalsF.good());
         
@@ -397,7 +398,7 @@ namespace graphchi {
             st = en + 1;
         }
         for(int i=0; i < nshards; i++) {
-            logstream(LOG_INFO) << "shard: " << intervals[i].first << " - " << intervals[i].second << std::endl;
+            Rcpp::Rcout << "shard: " << intervals[i].first << " - " << intervals[i].second << std::endl;
         }
         intervalsF.close();
     }
@@ -410,8 +411,8 @@ namespace graphchi {
         std::string numv_filename = basefilename + ".numvertices";
         std::ifstream vfileF(numv_filename.c_str());
         if (!vfileF.good()) {
-            logstream(LOG_ERROR) << "Could not find file " << numv_filename << std::endl;
-            logstream(LOG_ERROR) << "Maybe you have old shards - please recreate." << std::endl;
+            Rcpp::Rcerr << "Could not find file " << numv_filename << std::endl;
+            Rcpp::Rcerr << "Maybe you have old shards - please recreate." << std::endl;
             assert(false);
         }
         size_t n;
@@ -446,14 +447,14 @@ namespace graphchi {
             int err2 = stat(adjfname.c_str(), &shardstat);
             
             if (err1 != 0 || err2 != 0) {
-                logstream(LOG_ERROR) << "Error when checking file modification times:  " << strerror(errno) << std::endl;
+                Rcpp::Rcerr << "Error when checking file modification times:  " << strerror(errno) << std::endl;
                 return nshards;
             }
             
             if (origstat.st_mtime > shardstat.st_mtime) {
-                logstream(LOG_INFO) << "The input graph modification date was newer than of the shards." << std::endl;
-                logstream(LOG_INFO) << "Going to delete old shards and recreate new ones. To disable " << std::endl;
-                logstream(LOG_INFO) << "functionality, specify --disable-modtime-check=1" << std::endl;
+                Rcpp::Rcout << "The input graph modification date was newer than of the shards." << std::endl;
+                Rcpp::Rcout << "Going to delete old shards and recreate new ones. To disable " << std::endl;
+                Rcpp::Rcout << "functionality, specify --disable-modtime-check=1" << std::endl;
                 
                 // Delete shards
                 delete_shards<EdgeDataType>(basefilename, nshards);
@@ -461,10 +462,10 @@ namespace graphchi {
                 // Delete the bin-file
                 std::string preprocfile = preprocess_filename<EdgeDataType>(basefilename);
                 if (file_exists(preprocfile)) {
-                    logstream(LOG_DEBUG) << "Deleting: " << preprocfile << std::endl;
+                    Rcpp::Rcerr << "Deleting: " << preprocfile << std::endl;
                     int err = remove(preprocfile.c_str());
                     if (err != 0) {
-                        logstream(LOG_ERROR) << "Error deleting file: " << preprocfile << ", " <<
+                        Rcpp::Rcerr << "Error deleting file: " << preprocfile << ", " <<
                         strerror(errno) << std::endl;
                     }
                 }

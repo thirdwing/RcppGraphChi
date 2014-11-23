@@ -79,12 +79,12 @@ void parse(int i) {
         
         // try to convert caller - if it goes wrong just continue
         if (inet_aton(caller_str, &caller) == 0) {
-            if (debug) logstream(LOG_WARNING) << "could not convert caller-ip:" << caller_str << std::endl;
+            if (debug) Rcpp::Rcout << "could not convert caller-ip:" << caller_str << std::endl;
             continue;
         }
         // try to convert caller - if it goes wrong just continue
         if (inet_aton(callee_str, &callee) == 0) {
-            if (debug) logstream(LOG_WARNING) << "could not convert callee-ip:" << caller_str << std::endl;
+            if (debug) Rcpp::Rcout << "could not convert callee-ip:" << caller_str << std::endl;
             continue;
         }
 

@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include <Rcpp.h>
+
 #include "mmio.h"
 
 int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
@@ -77,7 +79,7 @@ int mm_read_unsymmetric_sparse(const char *fname, int *M_, int *N_, int *nz_,
     {
         int rc = fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i]);
         if (rc != 3)
-          logstream(LOG_FATAL)<<"Failed to read input row: " << i << std::endl;
+          Rcpp::Rcout<<"Failed to read input row: " << i << std::endl;
         I[i]--;  /* adjust from 1-based to 0-based */
         J[i]--;
     }
@@ -116,7 +118,7 @@ int mm_read_banner(FILE *f, MM_typecode *matcode)
     if ((rc = sscanf(line, "%s %s %s %s %s", banner, mtx, crd, data_type, 
         storage_scheme)) != 5){
         perror("Error: Failed to read matrix market header");
-        logstream(LOG_ERROR)<<"scanf returned " << rc << std::endl;
+        Rcpp::Rcout<<"scanf returned " << rc << std::endl;
         return MM_NO_HEADER;
     }
 

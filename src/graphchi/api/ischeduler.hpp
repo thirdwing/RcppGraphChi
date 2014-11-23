@@ -30,8 +30,9 @@
 #ifndef DEF_GRAPHCHI_ISCHEDULER
 #define DEF_GRAPHCHI_ISCHEDULER
 
+#include <Rcpp.h>
+
 #include "graphchi/graphchi_types.hpp"
-#include "graphchi/logger/logger.hpp"
 
 namespace graphchi {
     
@@ -57,7 +58,7 @@ namespace graphchi {
         virtual ~non_scheduler() {} 
         virtual void add_task(vid_t vid, bool also_this_iteration=false) {
             if (nwarnings++ % 10000 == 0) {
-                logstream(LOG_WARNING) << "Tried to add task to scheduler, but scheduling was not enabled!" << std::endl;
+                Rcpp::Rcout << "Tried to add task to scheduler, but scheduling was not enabled!" << std::endl;
             } 
         }
         virtual void add_task_to_all() { }

@@ -41,6 +41,8 @@
 #include <vector>
 #include <sys/time.h>
 
+#include <Rcpp.h>
+
 #include "api/chifilenames.hpp"
 #include "api/graph_objects.hpp"
 #include "api/graphchi_context.hpp"
@@ -49,7 +51,6 @@
 #include "engine/auxdata/vertex_data.hpp"
 #include "engine/bitset_scheduler.hpp"
 #include "io/stripedio.hpp"
-#include "logger/logger.hpp"
 #include "metrics/metrics.hpp"
 #include "shards/memoryshard.hpp"
 #include "shards/slidingshard.hpp"
@@ -129,12 +130,12 @@ namespace graphchi {
         metrics &m;
         
         void print_config() {
-            logstream(LOG_INFO) << "Engine configuration: " << std::endl;
-            logstream(LOG_INFO) << " exec_threads = " << exec_threads << std::endl;
-            logstream(LOG_INFO) << " load_threads = " << load_threads << std::endl;
-            logstream(LOG_INFO) << " membudget_mb = " << membudget_mb << std::endl;
-            logstream(LOG_INFO) << " blocksize = " << blocksize << std::endl;
-            logstream(LOG_INFO) << " scheduler = " << use_selective_scheduling << std::endl;
+            Rcpp::Rcout << "Engine configuration: " << std::endl;
+            Rcpp::Rcout << " exec_threads = " << exec_threads << std::endl;
+            Rcpp::Rcout << " load_threads = " << load_threads << std::endl;
+            Rcpp::Rcout << " membudget_mb = " << membudget_mb << std::endl;
+            Rcpp::Rcout << " blocksize = " << blocksize << std::endl;
+            Rcpp::Rcout << " scheduler = " << use_selective_scheduling << std::endl;
         }
         
     public:
@@ -151,10 +152,10 @@ namespace graphchi {
             iomgr = new stripedio(m);
             m.stop_time("iomgr_init");
 #ifndef DYNAMICEDATA
-            logstream(LOG_INFO) << "Initializing graphchi_engine. This engine expects " << sizeof(EdgeDataType)
+            Rcpp::Rcout << "Initializing graphchi_engine. This engine expects " << sizeof(EdgeDataType)
             << "-byte edge data. " << std::endl;
 #else
-            logstream(LOG_INFO) << "Initializing graphchi_engine with dynamic edge-data. This engine expects " << sizeof(int)
+            Rcpp::Rcout << "Initializing graphchi_engine with dynamic edge-data. This engine expects " << sizeof(int)
             << "-byte edge data. " << std::endl;
 
 #endif
@@ -162,7 +163,7 @@ namespace graphchi {
             if (nshards < 1) {
                 nshards = get_option_int("nshards", 0);
                 if (nshards < 1) {
-                    logstream(LOG_WARNING) << "Number of shards was not specified (command-line argument 'nshards'). Trying to detect. " << std::endl;
+                    Rcpp::Rcout << "Number of shards was not specified (command-line argument 'nshards'). Trying to detect. " << std::endl;
                     nshards = discover_shard_num();
                 }
             }
@@ -245,10 +246,10 @@ namespace graphchi {
             int _nshards = find_shards<int>(base_filename);
 #endif
             if (_nshards == 0) {
-                logstream(LOG_ERROR) << "Could not find suitable shards - maybe you need to run sharder to create them?" << std::endl;
-                logstream(LOG_ERROR) << "Was looking with filename [" << base_filename << "]" << std::endl;
-                logstream(LOG_ERROR) << "You need to create the shards with edge data-type of size " << sizeof(EdgeDataType) << " bytes." << std::endl;
-                logstream(LOG_ERROR) << "To specify the number of shards, use command-line parameter 'nshards'" << std::endl;
+                Rcpp::Rcerr << "Could not find suitable shards - maybe you need to run sharder to create them?" << std::endl;
+                Rcpp::Rcerr << "Was looking with filename [" << base_filename << "]" << std::endl;
+                Rcpp::Rcerr << "You need to create the shards with edge data-type of size " << sizeof(EdgeDataType) << " bytes." << std::endl;
+                Rcpp::Rcerr << "To specify the number of shards, use command-line parameter 'nshards'" << std::endl;
                 assert(0);
             }
             return _nshards;
@@ -322,7 +323,7 @@ namespace graphchi {
                     // Raw data and object cost included
                     memreq += sizeof(svertex_t) + (sizeof(EdgeDataType) + sizeof(vid_t) + sizeof(graphchi_edge<EdgeDataType>))*(outc + inc);
                     if (memreq > membudget) {
-                        logstream(LOG_DEBUG) << "Memory budget exceeded with " << memreq << " bytes." << std::endl;
+                        Rcpp::Rcout << "Memory budget exceeded with " << memreq << " bytes." << std::endl;
                         return fromvid + i - 1;  // Previous was enough
                     }
                 }
@@ -467,7 +468,7 @@ namespace graphchi {
             work = nupdates = 0;
             
             for(iter=0; iter<niters; iter++) {
-                logstream(LOG_INFO) << "In-memory mode: Iteration " << iter << " starts. (" << chicontext.runtime() << " secs)" << std::endl;
+                Rcpp::Rcout << "In-memory mode: Iteration " << iter << " starts. (" << chicontext.runtime() << " secs)" << std::endl;
                 chicontext.iteration = iter;
                 if (iter > 0) // First one run before -- ugly
                     userprogram.before_iteration(iter, chicontext);
@@ -475,7 +476,7 @@ namespace graphchi {
                 
                 if (use_selective_scheduling) {
                     if (iter > 0 && !scheduler->has_new_tasks) {
-                        logstream(LOG_INFO) << "No new tasks to run!" << std::endl;
+                        Rcpp::Rcout << "No new tasks to run!" << std::endl;
                         niters = iter;
                         break;
                     }
@@ -517,14 +518,14 @@ namespace graphchi {
                 userprogram.after_exec_interval(0, (int)num_vertices(), chicontext);
                 userprogram.after_iteration(iter, chicontext);
                 if (chicontext.last_iteration > 0 && chicontext.last_iteration <= iter){
-                   logstream(LOG_INFO)<<"Stopping engine since last iteration was set to: " << chicontext.last_iteration << std::endl;
+                   Rcpp::Rcout<<"Stopping engine since last iteration was set to: " << chicontext.last_iteration << std::endl;
                    break;
                 }
 
             }
             
             if (save_edgesfiles_after_inmemmode) {
-                logstream(LOG_INFO) << "Saving memory shard..." << std::endl;
+                Rcpp::Rcout << "Saving memory shard..." << std::endl;
                 
             }
         }
@@ -654,12 +655,12 @@ namespace graphchi {
          */
         virtual size_t num_edges() {
             if (sliding_shards.size() == 0) {
-                logstream(LOG_ERROR) << "engine.num_edges() can be called only after engine has been started. To be fixed later. As a workaround, put the engine into a global variable, and query the number afterwards in begin_iteration(), for example." << std::endl;
+                Rcpp::Rcerr << "engine.num_edges() can be called only after engine has been started. To be fixed later. As a workaround, put the engine into a global variable, and query the number afterwards in begin_iteration(), for example." << std::endl;
                 assert(false);
             }
             if (only_adjacency) {
                 // TODO: fix.
-                logstream(LOG_ERROR) << "Asked number of edges, but engine was run without edge-data." << std::endl; 
+                Rcpp::Rcerr << "Asked number of edges, but engine was run without edge-data." << std::endl; 
                 return 0;
             }
             return nedges;
@@ -729,7 +730,7 @@ namespace graphchi {
             if (svertex_t().computational_edges()) {
                 // Heuristic
                 set_maxwindow(membudget_mb * 1024 * 1024 / 3 / 100);
-                logstream(LOG_INFO) << "Set maxwindow:" << maxwindow << std::endl;
+                Rcpp::Rcout << "Set maxwindow:" << maxwindow << std::endl;
             }
             
             if (randomization) {
@@ -741,9 +742,9 @@ namespace graphchi {
             }
             
             niters = _niters;
-            logstream(LOG_INFO) << "GraphChi starting" << std::endl;
-            logstream(LOG_INFO) << "Licensed under the Apache License 2.0" << std::endl;
-            logstream(LOG_INFO) << "Copyright Aapo Kyrola et al., Carnegie Mellon University (2012)" << std::endl;
+            Rcpp::Rcout << "GraphChi starting" << std::endl;
+            Rcpp::Rcout << "Licensed under the Apache License 2.0" << std::endl;
+            Rcpp::Rcout << "Copyright Aapo Kyrola et al., Carnegie Mellon University (2012)" << std::endl;
             
             if (vertex_data_handler == NULL && !disable_vertexdata_storage)
                 vertex_data_handler = new vertex_data_store<VertexDataType>(base_filename, num_vertices(), iomgr);
@@ -758,7 +759,7 @@ namespace graphchi {
                     for(int j=0; j<(int)sliding_shards.size(); j++) sliding_shards[j]->initdata();
                 }
             } else {
-                logstream(LOG_DEBUG) << "Engine being restarted, do not reinitialize." << std::endl;
+                Rcpp::Rcout << "Engine being restarted, do not reinitialize." << std::endl;
             }
                 
             initialize_scheduler();
@@ -777,7 +778,7 @@ namespace graphchi {
             
             /* Main loop */
             for(iter=0; iter < niters; iter++) {
-                logstream(LOG_INFO) << "Start iteration: " << iter << std::endl;
+                Rcpp::Rcout << "Start iteration: " << iter << std::endl;
                 
                 initialize_iter();
                 
@@ -802,7 +803,7 @@ namespace graphchi {
                 if (use_selective_scheduling) {
                     if (scheduler != NULL) {
                         if (!scheduler->has_new_tasks) {
-                            logstream(LOG_INFO) << "No new tasks to run!" << std::endl;
+                            Rcpp::Rcout << "No new tasks to run!" << std::endl;
                             break;
                         }
                         scheduler->has_new_tasks = false; // Kind of misleading since scheduler may still have tasks - but no new tasks.
@@ -856,7 +857,7 @@ namespace graphchi {
                     memoryshard->set_disable_async_writes(randomization);
                     
                     sub_interval_st = interval_st;
-                    logstream(LOG_INFO) << chicontext.runtime() << "s: Starting: " 
+                    Rcpp::Rcout << chicontext.runtime() << "s: Starting: " 
                     << sub_interval_st << " -- " << interval_en << std::endl;
                     
                     while (sub_interval_st <= interval_en) {
@@ -869,11 +870,11 @@ namespace graphchi {
                                                                 size_t(membudget_mb) * 1024 * 1024);
                         assert(sub_interval_en >= sub_interval_st);
                         
-                        logstream(LOG_INFO) << "Iteration " << iter << "/" << (niters - 1) << ", subinterval: " << sub_interval_st << " - " << sub_interval_en << std::endl;
+                        Rcpp::Rcout << "Iteration " << iter << "/" << (niters - 1) << ", subinterval: " << sub_interval_st << " - " << sub_interval_en << std::endl;
                                                 
                         bool any_vertex_scheduled = is_any_vertex_scheduled(sub_interval_st, sub_interval_en);
                         if (!any_vertex_scheduled) {
-                            logstream(LOG_INFO) << "No vertices scheduled, skip." << std::endl;
+                            Rcpp::Rcout << "No vertices scheduled, skip." << std::endl;
                             sub_interval_st = sub_interval_en + 1;
                             modification_lock.unlock();
                             continue;
@@ -884,7 +885,7 @@ namespace graphchi {
                         graphchi_edge<EdgeDataType> * edata = NULL;
                         
                         std::vector<svertex_t> vertices(nvertices, svertex_t());
-                        logstream(LOG_DEBUG) << "Allocation " << nvertices << " vertices, sizeof:" << sizeof(svertex_t)
+                        Rcpp::Rcout << "Allocation " << nvertices << " vertices, sizeof:" << sizeof(svertex_t)
                         << " total:" << nvertices * sizeof(svertex_t) << std::endl;
                         init_vertices(vertices, edata);
                         
@@ -893,7 +894,7 @@ namespace graphchi {
                         
                         modification_lock.unlock();
                         
-                        logstream(LOG_INFO) << "Start updates" << std::endl;
+                        Rcpp::Rcout << "Start updates" << std::endl;
                         /* Execute updates */
                         if (!is_inmemory_mode()) {
                             exec_updates(userprogram, vertices);
@@ -903,7 +904,7 @@ namespace graphchi {
 
                             exec_updates_inmemory_mode(userprogram, vertices); 
                         }
-                        logstream(LOG_INFO) << "Finished updates" << std::endl;
+                        Rcpp::Rcout << "Finished updates" << std::endl;
                         
                         
                         /* Save vertices */
@@ -952,7 +953,7 @@ namespace graphchi {
                 /* Check if user has defined a last iteration */
                 if (chicontext.last_iteration >= 0) {
                     niters = chicontext.last_iteration + 1;
-                    logstream(LOG_DEBUG) << "Last iteration is now: " << (niters-1) << std::endl;
+                    Rcpp::Rcout << "Last iteration is now: " << (niters-1) << std::endl;
                 }
                 iteration_finished();
                 iomgr->first_pass_finished(); // Tell IO-manager that we have passed over the graph (used for optimization)
@@ -1052,8 +1053,8 @@ namespace graphchi {
         void set_enable_deterministic_parallelism(bool b) {
 #ifdef DYNAMICEDATA
             if (!b) {
-                logstream(LOG_ERROR) << "With dynamic edge data, you cannot disable determinic parallelism." << std::endl;
-                logstream(LOG_ERROR) << "Otherwise race conditions would corrupt the structure of the data." << std::endl;
+                Rcpp::Rcerr << "With dynamic edge data, you cannot disable determinic parallelism." << std::endl;
+                Rcpp::Rcerr << "Otherwise race conditions would corrupt the structure of the data." << std::endl;
                 assert(b);
                 return;
             }
@@ -1083,7 +1084,8 @@ namespace graphchi {
          
         ioutput<VertexDataType, EdgeDataType> * output(size_t idx) {
             if (idx >= outputs.size()) {
-                logstream(LOG_FATAL) << "Tried to get output with index " << idx << ", but only " << outputs.size() << " outputs were initialized!" << std::endl;
+                Rcpp::Rcerr << "Tried to get output with index " << idx << ", but only " << outputs.size() << " outputs were initialized!" << std::endl;
+                Rcpp::stop("");
             }
             assert(idx < outputs.size());
             return outputs[idx];
@@ -1111,7 +1113,7 @@ namespace graphchi {
                 std::string edatashardname =  filename_shard_edata<ET>(base_filename, p, nshards);
                 std::string dirname = dirname_shard_edata_block(edatashardname, blocksize);
                 size_t edatasize = get_shard_edata_filesize<ET>(edatashardname);
-                logstream(LOG_INFO) << "Clearing data: " << edatashardname << " bytes: " << edatasize << std::endl;
+                Rcpp::Rcout << "Clearing data: " << edatashardname << " bytes: " << edatasize << std::endl;
                 int nblocks = (int) ((edatasize / blocksize) + (edatasize % blocksize == 0 ? 0 : 1));
                 for(int i=0; i < nblocks; i++) {
                     std::string block_filename = filename_shard_edata_block(edatashardname, i, blocksize);

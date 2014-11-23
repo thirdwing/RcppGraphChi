@@ -288,11 +288,11 @@ namespace graphchi {
     public:       
         bool add_edge(vid_t src, vid_t dst, EdgeDataType edata) {
             if (src == dst) {
-                logstream(LOG_WARNING) << "WARNING : tried to add self-edge!" << std::endl;
+                Rcpp::Rcout << "WARNING : tried to add self-edge!" << std::endl;
                 return true;
             }
             if (this->iter < 1) {
-                logstream(LOG_WARNING) << "Tried to add edge before first iteration has passed" << std::endl;
+                Rcpp::Rcout << "Tried to add edge before first iteration has passed" << std::endl;
                 usleep(1000000);
                 return false;
             }

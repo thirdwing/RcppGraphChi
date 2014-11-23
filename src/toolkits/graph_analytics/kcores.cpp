@@ -152,7 +152,7 @@ vec fill_output(){
 
 int main(int argc,  const char *argv[]) {
 
-  logstream(LOG_WARNING)<<"GraphChi graph analytics library is written by Danny Bickson (c). Send any "
+  Rcpp::Rcout<<"GraphChi graph analytics library is written by Danny Bickson (c). Send any "
     " comments or bug reports to danny.bickson@gmail.com " << std::endl;
 
   //* GraphChi initialization will read the command line arguments and the configuration file. */

@@ -246,7 +246,7 @@ namespace graphchi {
         std::vector<shard_index> load_index() {
             std::string indexfile = filename_shard_adjidx(filename_adj);
             if (!file_exists(indexfile)) {
-                logstream(LOG_DEBUG) << "Cannot find index: " << indexfile << std::endl;
+                Rcpp::Rcout << "Cannot find index: " << indexfile << std::endl;
                 /* Create faux index */
                 std::vector<shard_index> singletonidx;
                 singletonidx.push_back(shard_index(0, 0, 0));
@@ -314,17 +314,17 @@ namespace graphchi {
                     
                 } else {
                     if (blockid == 0) {
-                        logstream(LOG_ERROR) << "Shard block file did not exists:" << block_filename << std::endl;
+                        Rcpp::Rcerr << "Shard block file did not exists:" << block_filename << std::endl;
                     }
                     if (blockid < nblocks) {
-                        logstream(LOG_ERROR) << "Did not find block " << block_filename << std::endl;
-                        logstream(LOG_ERROR) << "Going to exit..." << std::endl;
+                        Rcpp::Rcerr << "Did not find block " << block_filename << std::endl;
+                        Rcpp::Rcerr << "Going to exit..." << std::endl;
                     }
                     break;
                 }
             }
             
-            logstream(LOG_DEBUG) << "Compressed/full size: " << compressedsize * 1.0 / edatafilesize <<
+            Rcpp::Rcout << "Compressed/full size: " << compressedsize * 1.0 / edatafilesize <<
             " number of blocks: " << nblocks << std::endl;
             assert(blockid == nblocks);
             

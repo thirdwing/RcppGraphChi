@@ -96,7 +96,7 @@ vec mvnrndex(vec &mu, mat &sigma, int d, double regularization){
    mat tmp;
    bool ret = chol(sigma, tmp);
    if (!ret)
-     logstream(LOG_FATAL)<<"Cholesky decomposition in mvnrned() got into numerical errors. Try to set --bptf_chol_diagonal_weighting command line argument to add regularization" << std::endl;
+     Rcpp::Rcerr<<"Cholesky decomposition in mvnrned() got into numerical errors. Try to set --bptf_chol_diagonal_weighting command line argument to add regularization" << std::endl;
    vec x = zeros(d);
    vec col = randn1_vec(mu.size(), 1,0);
    x = mu + transpose(tmp) * col;

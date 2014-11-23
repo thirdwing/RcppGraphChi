@@ -310,9 +310,9 @@ class DistVec{
 
     void debug_print(const char * name){
       if (debug){
-        std::cout<<name<<"["<<display_offset<<"]" << std::endl;
+        Rcpp::Rcout<<name<<"["<<display_offset<<"]" << std::endl;
         for (int i=start; i< std::min(end, start+MAX_PRINT_ITEMS); i++){  
-          //std::cout<<latent_factors_inmem(i).pvec[(mi.r_offset==-1)?offset:mi.r_offset]<<" ";
+          //Rcpp::Rcout<<latent_factors_inmem(i).pvec[(mi.r_offset==-1)?offset:mi.r_offset]<<" ";
           printf("%.5lg ", fabs(latent_factors_inmem[i].pvec[(mi.r_offset==-1)?offset:mi.r_offset]));
         }
         printf("\n");
@@ -563,7 +563,7 @@ class DistDouble{
       return val == _val;
     }
     void debug_print(const char * name){
-      std::cout<<name<<" "<<val<<std::endl;
+      Rcpp::Rcout<<name<<" "<<val<<std::endl;
     }
     double toDouble(){
       return val;

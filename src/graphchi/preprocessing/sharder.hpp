@@ -48,11 +48,12 @@
 #include <sstream>
 #include <string>
 
+#include <Rcpp.h>
+
 #include "api/chifilenames.hpp"
 #include "api/graphchi_context.hpp"
 #include "graphchi_types.hpp"
 #include "io/stripedio.hpp"
-#include "logger/logger.hpp"
 #include "engine/auxdata/degree_data.hpp"
 #include "metrics/metrics.hpp"
 #include "metrics/reps/basic_reporter.hpp"
@@ -164,9 +165,9 @@ namespace graphchi {
     
             if (duplicate_filter != NULL) {
                 // Sort by dst, then by src so can effectively remove duplicates
-                logstream(LOG_INFO) << "Sorting shovel: " << shovelname << ", max:" << max_vertex << std::endl;
+                Rcpp::Rcout << "Sorting shovel: " << shovelname << ", max:" << max_vertex << std::endl;
                 iSort(buffer, (intT)numedges, intT(max_vertex)*intT(max_vertex)+intT(max_vertex), dstSrcF<EdgeDataType>(max_vertex));
-                logstream(LOG_INFO) << "Sort done." << shovelname << std::endl;
+                Rcpp::Rcout << "Sort done." << shovelname << std::endl;
            
                 edge_with_value<EdgeDataType> * tmpbuf = (edge_with_value<EdgeDataType> *) calloc(sizeof(edge_with_value<EdgeDataType>), numedges);
                 size_t i = 1;
@@ -188,9 +189,9 @@ namespace graphchi {
                 free(buffer);
                 buffer = tmpbuf;
             } else {
-                logstream(LOG_INFO) << "Sorting shovel: " << shovelname << ", max:" << max_vertex << std::endl;
+                Rcpp::Rcout << "Sorting shovel: " << shovelname << ", max:" << max_vertex << std::endl;
                 iSort(buffer, (intT)numedges, (intT)max_vertex, dstF<EdgeDataType>());
-                logstream(LOG_INFO) << "Sort done." << shovelname << std::endl;
+                Rcpp::Rcout << "Sort done." << shovelname << std::endl;
                 
             }
             
@@ -229,7 +230,7 @@ namespace graphchi {
             f = open(shovelfile.c_str(), O_RDONLY);
             
             if (f < 0) {
-                logstream(LOG_ERROR) << "Could not open shovel file: " << shovelfile << std::endl;
+                Rcpp::Rcerr << "Could not open shovel file: " << shovelfile << std::endl;
                 printf("Error: %d, %s\n", errno, strerror(errno));
             }
             
@@ -367,7 +368,7 @@ namespace graphchi {
             shovelsize = (1024l * 1024l * size_t(get_option_int("membudget_mb", 1024)) / 4l / sizeof(edge_with_value<EdgeDataType>));
             curshovel_idx = 0;
             
-            logstream(LOG_INFO) << "Starting preprocessing, shovel size: " << shovelsize << std::endl;
+            Rcpp::Rcout << "Starting preprocessing, shovel size: " << shovelsize << std::endl;
             
             curshovel_buffer = (edge_with_value<EdgeDataType> *) calloc(shovelsize, sizeof(edge_with_value<EdgeDataType>));
             
@@ -398,13 +399,13 @@ namespace graphchi {
                 flushinfo->flush();
                 
                 /* Wait for threads to finish */
-                logstream(LOG_INFO) << "Waiting shoveling threads..." << std::endl;
+                Rcpp::Rcout << "Waiting shoveling threads..." << std::endl;
                 for(int i=0; i < (int)shovelthreads.size(); i++) {
                     pthread_join(shovelthreads[i], NULL);
                 }
             } else {
                 if (shovelthreads.size() > 2) {
-                    logstream(LOG_INFO) << "Too many outstanding shoveling threads..." << std::endl;
+                    Rcpp::Rcout << "Too many outstanding shoveling threads..." << std::endl;
 
                     for(int i=0; i < (int)shovelthreads.size(); i++) {
                         pthread_join(shovelthreads[i], NULL);
@@ -516,7 +517,7 @@ namespace graphchi {
             // Check if buffer is big enough
             if (bufptr - buf + sizeof(T) > ebuffer_size) {
                 ebuffer_size *= 2;
-                logstream(LOG_DEBUG) << "Increased buffer size to: " << ebuffer_size << std::endl;
+                Rcpp::Rcout << "Increased buffer size to: " << ebuffer_size << std::endl;
                 size_t ptroff = bufptr - buf; // Remember the offset
                 buf = (char *) realloc(buf, ebuffer_size);
                 bufptr = buf + ptroff;
@@ -561,16 +562,16 @@ namespace graphchi {
             }
             
             if (nshards_string.find("auto") != std::string::npos || nshards_string == "0") {
-                logstream(LOG_INFO) << "Determining number of shards automatically." << std::endl;
+                Rcpp::Rcout << "Determining number of shards automatically." << std::endl;
                 
                 int membudget_mb = get_option_int("membudget_mb", 1024);
-                logstream(LOG_INFO) << "Assuming available memory is " << membudget_mb << " megabytes. " << std::endl;
-                logstream(LOG_INFO) << " (This can be defined with configuration parameter 'membudget_mb')" << std::endl;
+                Rcpp::Rcout << "Assuming available memory is " << membudget_mb << " megabytes. " << std::endl;
+                Rcpp::Rcout << " (This can be defined with configuration parameter 'membudget_mb')" << std::endl;
                 
                 size_t numedges = shoveled_edges; 
                 
                 double max_shardsize = membudget_mb * 1024. * 1024. / 8;
-                logstream(LOG_INFO) << "Determining maximum shard size: " << (max_shardsize / 1024. / 1024.) << " MB." << std::endl;
+                Rcpp::Rcout << "Determining maximum shard size: " << (max_shardsize / 1024. / 1024.) << " MB." << std::endl;
                 
                 nshards = (int) ( 1 + (numedges * sizeof(FinalEdgeDataType) / max_shardsize) + 0.5);
                 
@@ -583,7 +584,7 @@ namespace graphchi {
                 nshards = atoi(nshards_string.c_str());
             }
             assert(nshards > 0);
-            logstream(LOG_INFO) << "Number of shards to be created: " << nshards << std::endl;
+            Rcpp::Rcout << "Number of shards to be created: " << nshards << std::endl;
         }
         
         
@@ -622,7 +623,7 @@ namespace graphchi {
             blockid = 0;
             size_t edgecounter = 0;
             curadjfilepos = 0;
-            logstream(LOG_INFO) << "Starting final processing for shard: " << shard << std::endl;
+            Rcpp::Rcout << "Starting final processing for shard: " << shard << std::endl;
             
             std::string fname = filename_shard_adj(basefilename, shard, nshards);
             std::string edfname = filename_shard_edata<FinalEdgeDataType>(basefilename, shard, nshards);
@@ -633,7 +634,7 @@ namespace graphchi {
                 mkdir(edblockdirname.c_str(), 0777);
             size_t numedges = shovelsize / sizeof(edge_t);
             
-            logstream(LOG_DEBUG) << "Shovel size:" << shovelsize << " edges: " << numedges << std::endl;
+            Rcpp::Rcout << "Shovel size:" << shovelsize << " edges: " << numedges << std::endl;
             
             m.start_time("finish_shard.sort");
 #ifndef DYNAMICEDATA
@@ -662,7 +663,7 @@ namespace graphchi {
                     }
                 }
                 numedges = i;
-                logstream(LOG_DEBUG) << "After duplicate elimination: " << numedges << " edges" << std::endl;
+                Rcpp::Rcout << "After duplicate elimination: " << numedges << " edges" << std::endl;
                 free(shovelbuf);
                 shovelbuf = tmpbuf; tmpbuf = NULL;
             }
@@ -676,7 +677,7 @@ namespace graphchi {
             // Create the final file
             int f = open(fname.c_str(), O_WRONLY | O_CREAT, S_IROTH | S_IWOTH | S_IWUSR | S_IRUSR);
             if (f < 0) {
-                logstream(LOG_ERROR) << "Could not open " << fname << " error: " << strerror(errno) << std::endl;
+                Rcpp::Rcerr << "Could not open " << fname << " error: " << strerror(errno) << std::endl;
             }
             assert(f >= 0);
             int trerr = ftruncate(f, 0);
@@ -699,7 +700,7 @@ namespace graphchi {
             size_t istart = 0;
             size_t tot_edatabytes = 0;
             for(size_t i=0; i <= numedges; i++) {
-                if (i % 10000000 == 0) logstream(LOG_DEBUG) << i << " / " << numedges << std::endl;
+                if (i % 10000000 == 0) Rcpp::Rcout << i << " / " << numedges << std::endl;
 #ifdef DYNAMICEDATA
                 i += jumpover;  // With dynamic values, there might be several values for one edge, and thus the edge repeated in the data.
                 jumpover = 0;
@@ -710,7 +711,7 @@ namespace graphchi {
                 
                 if (lastdst == edge.dst && edge.src == curvid) {
                     // Currently not supported
-                    logstream(LOG_ERROR) << "Duplicate edge in the stream - aborting" << std::endl;
+                    Rcpp::Rcerr << "Duplicate edge in the stream - aborting" << std::endl;
                     assert(false);
                 }
                 lastdst = edge.dst;
@@ -865,7 +866,7 @@ namespace graphchi {
             
             if (cur_shard_counter == shard_capacity) {
                 /* Really should have a way to limit shard sizes, but probably not needed in practice */
-                logstream(LOG_WARNING) << "Shard " << shardnum << " overflowing! " << cur_shard_counter << " / " << shard_capacity << std::endl;
+                Rcpp::Rcout << "Shard " << shardnum << " overflowing! " << cur_shard_counter << " / " << shard_capacity << std::endl;
                 shard_capacity = (size_t) (1.2 * shard_capacity);
                 sinkbuffer = (edge_with_value<EdgeDataType>*) realloc(sinkbuffer, shard_capacity * sizeof(edge_with_value<EdgeDataType>));
             }
@@ -884,23 +885,23 @@ namespace graphchi {
             cur_shard_counter = 0;
             
             // Adjust edges per hard so that it takes into account how many edges have been spilled now
-            logstream(LOG_INFO) << "Remaining edges: " << (shoveled_edges - sharded_edges) << " remaining shards:" << (nshards - shardnum)
+            Rcpp::Rcout << "Remaining edges: " << (shoveled_edges - sharded_edges) << " remaining shards:" << (nshards - shardnum)
                 << " edges per shard=" << edges_per_shard << std::endl;
             if (shardnum < nshards) edges_per_shard = (shoveled_edges - sharded_edges) / (nshards - shardnum);
-            logstream(LOG_INFO) << "Edges per shard: " << edges_per_shard << std::endl;
+            Rcpp::Rcout << "Edges per shard: " << edges_per_shard << std::endl;
             
         }
         
         virtual void done() {
             createnextshard();
             if (shoveled_edges != sharded_edges) {
-                logstream(LOG_INFO) << "Shoveled " << shoveled_edges << " but sharded " << sharded_edges << " edges" << std::endl;
+                Rcpp::Rcout << "Shoveled " << shoveled_edges << " but sharded " << sharded_edges << " edges" << std::endl;
             }
             if (duplicate_edge_filter == NULL)
                 assert(shoveled_edges == sharded_edges);
             
             
-            logstream(LOG_INFO) << "Created " << shardnum << " shards, for " << sharded_edges << " edges";
+            Rcpp::Rcout << "Created " << shardnum << " shards, for " << sharded_edges << " edges";
             assert(shardnum <= nshards);
             free(sinkbuffer);
             sinkbuffer = NULL;
@@ -910,7 +911,7 @@ namespace graphchi {
             FILE * f = fopen(fname.c_str(), "w");
             
             if (f == NULL) {
-                logstream(LOG_ERROR) << "Could not open file: " << fname << " error: " <<
+                Rcpp::Rcerr << "Could not open file: " << fname << " error: " <<
                 strerror(errno) << std::endl;
             }
             assert(f != NULL);
@@ -948,8 +949,8 @@ namespace graphchi {
                 /* Temporary: force in-memory count of degrees because the PSW-based computation
                  is not yet compatible with dynamic edge data.
                  */
-                logstream(LOG_WARNING) << "Dynamic edge data support only sharding when the vertex degrees can be computed in-memory." << std::endl;
-                logstream(LOG_WARNING) << "If the program gets very slow (starts swapping), the data size is too big." << std::endl;
+                Rcpp::Rcout << "Dynamic edge data support only sharding when the vertex degrees can be computed in-memory." << std::endl;
+                Rcpp::Rcout << "If the program gets very slow (starts swapping), the data size is too big." << std::endl;
                 count_degrees_inmem = true;
             }
 #endif
@@ -964,13 +965,13 @@ namespace graphchi {
             shardnum = 0;
             this_interval_start = 0;
             sinkbuffer = (edge_with_value<EdgeDataType> *) calloc(shard_capacity, sizeof(edge_with_value<EdgeDataType>));
-            logstream(LOG_INFO) << "Edges per shard: " << edges_per_shard << " nshards=" << nshards << " total: " << shoveled_edges << std::endl;
+            Rcpp::Rcout << "Edges per shard: " << edges_per_shard << " nshards=" << nshards << " total: " << shoveled_edges << std::endl;
             cur_shard_counter = 0;
             
             /* Initialize kway merge sources */
             size_t B = membudget_mb * 1024 * 1024 / 2 / numshovels;
             while (B % sizeof(edge_with_value<EdgeDataType>) != 0) B++;
-            logstream(LOG_INFO) << "Buffer size in merge phase: " << B << std::endl;
+            Rcpp::Rcout << "Buffer size in merge phase: " << B << std::endl;
             prevvid = (-1);
             std::vector< merge_source<edge_with_value<EdgeDataType> > *> sources;
             for(int i=0; i < numshovels; i++) {
@@ -996,7 +997,7 @@ namespace graphchi {
                 std::string degreefname = filename_degree_data(basefilename);
                 int degreeOutF = open(degreefname.c_str(), O_RDWR | O_CREAT, S_IROTH | S_IWOTH | S_IWUSR | S_IRUSR);
                 if (degreeOutF < 0) {
-                    logstream(LOG_ERROR) << "Could not create: " << degreeOutF << std::endl;
+                    Rcpp::Rcerr << "Could not create: " << degreeOutF << std::endl;
                     assert(degreeOutF >= 0);
                 }
                 
@@ -1031,7 +1032,7 @@ namespace graphchi {
             int blocksize = compressed_block_size;
             
             for(int p=0; p < nshards; p++) {
-                logstream(LOG_INFO) << "Initialize streaming shard: " << p << std::endl;
+                Rcpp::Rcout << "Initialize streaming shard: " << p << std::endl;
                 sliding_shards.push_back(
                                          new slidingshard_t(iomgr, filename_shard_edata<dummy_t>(basefilename, p, nshards),
                                                             filename_shard_adj(basefilename, p, nshards), intervals[p].first,
@@ -1047,14 +1048,13 @@ namespace graphchi {
             
             int degreeOutF = open(outputfname.c_str(), O_RDWR | O_CREAT, S_IROTH | S_IWOTH | S_IWUSR | S_IRUSR);
             if (degreeOutF < 0) {
-                logstream(LOG_ERROR) << "Could not create: " << degreeOutF << std::endl;
+                Rcpp::Rcerr << "Could not create: " << degreeOutF << std::endl;
             }
             assert(degreeOutF >= 0);
             int trerr = ftruncate(degreeOutF, ginfo.nvertices * sizeof(int) * 2);
             assert(trerr == 0);
             if (trerr != 0) {
-                logstream(LOG_FATAL) << "Could not truncate!" << std::endl;
-                exit(0);
+                Rcpp::stop("Could not truncate!\n");
             }
             
             for(int window=0; window<nshards; window++) {
@@ -1070,11 +1070,11 @@ namespace graphchi {
                 memshard_t memshard(iomgr, filename_shard_edata<FinalEdgeDataType>(basefilename, window, nshards), filename_shard_adj(basefilename, window, nshards),
                                     interval_st, interval_en, blocksize, m);
                 memshard.only_adjacency = true;
-                logstream(LOG_INFO) << "Interval: " << interval_st << " " << interval_en << std::endl;
+                Rcpp::Rcout << "Interval: " << interval_st << " " << interval_en << std::endl;
                 
                 for(vid_t subinterval_st=interval_st; subinterval_st <= interval_en; ) {
                     vid_t subinterval_en = std::min(interval_en, subinterval_st + subwindow);
-                    logstream(LOG_INFO) << "(Degree proc.) Sub-window: [" << subinterval_st << " - " << subinterval_en << "]" << std::endl;
+                    Rcpp::Rcout << "(Degree proc.) Sub-window: [" << subinterval_st << " - " << subinterval_en << "]" << std::endl;
                     assert(subinterval_en >= subinterval_st && subinterval_en <= interval_en);
                     
                     /* Preallocate vertices */

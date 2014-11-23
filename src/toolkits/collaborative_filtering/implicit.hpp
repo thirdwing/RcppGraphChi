@@ -47,16 +47,16 @@ uint add_implicit_edges4(int type, sharder<als_edge_type>& shrd){
 
   uint added = 0;
   uint toadd  = (uint)(implicitratingnumedges > 0 ? implicitratingnumedges : implicitratingpercentage*N*M);
-  logstream(LOG_INFO)<<"Going to add: " << toadd << " implicit edges. " << std::endl;
+  Rcpp::Rcout<<"Going to add: " << toadd << " implicit edges. " << std::endl;
   if (toadd < 1)
-    logstream(LOG_FATAL)<<"Not able to add implicit edges, percentage or number of edges too small" << std::endl;
+    Rcpp::Rcerr<<"Not able to add implicit edges, percentage or number of edges too small" << std::endl;
   for (uint j=0; j< toadd; j++){
     ivec item = ::randi(1,0,N-1);
     ivec user = ::randi(1,0,M-1);
     shrd.preprocessing_add_edge(user[0], item[0], als_edge_type(implicitratingvalue, implicitratingweight));
     added++;
   } 
-  logstream(LOG_INFO)<<"Finished adding " << toadd << " implicit edges. " << std::endl;
+  Rcpp::Rcout<<"Finished adding " << toadd << " implicit edges. " << std::endl;
   return added;
 }
 
@@ -71,16 +71,16 @@ uint add_implicit_edges(int type, sharder<als_edge_type>& shrd ){
 
   uint added = 0;
   uint toadd  = (uint)(implicitratingnumedges > 0 ? implicitratingnumedges : implicitratingpercentage*N*M);
-  logstream(LOG_INFO)<<"Going to add: " << toadd << " implicit edges. " << std::endl;
+  Rcpp::Rcout<<"Going to add: " << toadd << " implicit edges. " << std::endl;
   if (toadd < 1)
-    logstream(LOG_FATAL)<<"Not able to add implicit edges, percentage or number of edges too small" << std::endl;
+    Rcpp::Rcerr<<"Not able to add implicit edges, percentage or number of edges too small" << std::endl;
   for (uint j=0; j< toadd; j++){
     ivec item = ::randi(1,0,N-1);
     ivec user = ::randi(1,0,M-1);
     shrd.preprocessing_add_edge(user[0], item[0], als_edge_type(implicitratingvalue));
     added++;
   } 
-  logstream(LOG_INFO)<<"Finished adding " << toadd << " implicit edges. " << std::endl;
+  Rcpp::Rcout<<"Finished adding " << toadd << " implicit edges. " << std::endl;
   return added;
 }
 
@@ -90,11 +90,11 @@ void parse_implicit_command_line(){
    implicitratingtype = get_option_int("implicitratingtype", implicitratingtype);
    implicitratingnumedges = get_option_int("implicitratingnumedges", implicitratingnumedges);
    if (implicitratingtype != IMPLICIT_RATING_RANDOM && implicitratingtype != IMPLICIT_RATING_DISABLED)
-     logstream(LOG_FATAL)<<"Implicit rating type should be either 0 (IMPLICIT_RATING_DISABLED) or 1 (IMPLICIT_RATING_RANDOM)" << std::endl;
+     Rcpp::Rcerr<<"Implicit rating type should be either 0 (IMPLICIT_RATING_DISABLED) or 1 (IMPLICIT_RATING_RANDOM)" << std::endl;
    implicitratingpercentage = get_option_float("implicitratingpercentage", implicitratingpercentage);
    if (implicitratingpercentage < 1e-8 && implicitratingpercentage > 0.8)
-     logstream(LOG_FATAL)<<"Implicit rating percentage should be (1e-8, 0.8)" << std::endl;
+     Rcpp::Rcerr<<"Implicit rating percentage should be (1e-8, 0.8)" << std::endl;
    if (implicitratingtype != IMPLICIT_RATING_DISABLED && implicitratingvalue == 0)
-     logstream(LOG_FATAL)<<"You are not allowed to use --implicitratingvalue=0. Please select a non zero value, for example -1" << std::endl;
+     Rcpp::Rcerr<<"You are not allowed to use --implicitratingvalue=0. Please select a non zero value, for example -1" << std::endl;
 }
 #endif //_IMPLICIT_HPP__

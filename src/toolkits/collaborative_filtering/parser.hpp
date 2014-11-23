@@ -61,7 +61,7 @@ feature_control fc;
  * return a numeric node ID out of the string text read from file (training, validation or test)
  */
 float get_node_id(char * pch, int pos, int token, size_t i, bool read_only = false){
-  //if (pos>=2) std::cout<<"get_node_id" << pch << " " << pos << " token: " << token << " i " << i << " " << read_only << std::endl; 
+  //if (pos>=2) Rcpp::Rcout<<"get_node_id" << pch << " " << pos << " token: " << token << " i " << i << " " << read_only << std::endl; 
   assert(pch != NULL);
   assert(i >= 0);
 
@@ -72,9 +72,9 @@ float get_node_id(char * pch, int pos, int token, size_t i, bool read_only = fal
     if (pos < 2)
       ret-=input_file_offset;
     if (pos == 0 && ret >= M)
-      logstream(LOG_FATAL)<<"Row index larger than the matrix row size " << ret << " > " << M << " in line: " << i << std::endl;
+      Rcpp::Rcerr<<"Row index larger than the matrix row size " << ret << " > " << M << " in line: " << i << std::endl;
     else if (pos == 1 && ret >= N)
-      logstream(LOG_FATAL)<<"Col index larger than the matrix row size " << ret << " > " << N << " in line: " << i << std::endl;
+      Rcpp::Rcerr<<"Col index larger than the matrix row size " << ret << " > " << N << " in line: " << i << std::endl;
 
   }
   //else read string id and assign numeric id
@@ -91,7 +91,7 @@ float get_node_id(char * pch, int pos, int token, size_t i, bool read_only = fal
     } 
     else { //else enter node into map (in case it did not exist) and return its position 
       assign_id(fc.node_id_maps[pos], id, pch);
-      //if (pos>=2) std::cout<<"id assigned: " << pos << " " << id << " " << pch << std::endl;
+      //if (pos>=2) Rcpp::Rcout<<"id assigned: " << pos << " " << id << " " << pch << std::endl;
       assert(id < fc.node_id_maps[pos].string2nodeid.size());
       ret = id;
     }
@@ -127,7 +127,7 @@ float get_value(char * pch, bool read_only, const char * linebuf_debug, int i){
 
   }    
   if (std::isnan(ret) || std::isinf(ret))
-    logstream(LOG_FATAL)<<"Failed to read value (inf/nan) on line: " << i << " " << 
+    Rcpp::Rcerr<<"Failed to read value (inf/nan) on line: " << i << " " << 
        "[" << linebuf_debug << "]" << std::endl;
   return ret;
 }
@@ -136,7 +136,7 @@ float get_value(char * pch, bool read_only, const char * linebuf_debug, int i){
 char * read_one_token(char *& linebuf, size_t i, char * linebuf_debug, int token, int type = TRAINING){
   char *pch = strsep(&linebuf,ptokens);
   if (pch == NULL && type == TRAINING)
-        logstream(LOG_FATAL)<<"Error reading line " << i << " [ " << linebuf_debug << " ] " << std::endl;
+        Rcpp::Rcerr<<"Error reading line " << i << " [ " << linebuf_debug << " ] " << std::endl;
   else if (pch == NULL && type == TEST)
      return NULL;
   return pch;
@@ -155,7 +155,7 @@ bool read_line(FILE * f, const std::string filename, size_t i, uint & I, uint & 
   int rc = getline(&linebuf, &linesize, f);
   if (rc == -1){
     perror("getline");
-    logstream(LOG_FATAL)<<"Failed to get line: " << i << " in file: " << filename << std::endl;
+    Rcpp::Rcerr<<"Failed to get line: " << i << " in file: " << filename << std::endl;
   }
 
   char * linebuf_to_free = linebuf;
@@ -210,7 +210,7 @@ bool read_line(FILE * f, const std::string filename, size_t i, uint & I, uint & 
       if (type == TRAINING)
 
         if (std::isnan(valarray[index]))
-          logstream(LOG_FATAL)<<"Error reading line " << i << " feature " << token << " [ " << linebuf_debug << " ] " << std::endl;
+          Rcpp::Rcerr<<"Error reading line " << i << " feature " << token << " [ " << linebuf_debug << " ] " << std::endl;
 
       index++;
       token++;
@@ -243,7 +243,7 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
   int nshards;
   if (validation_only && (nshards = find_shards<als_edge_type>(base_filename, get_option_string("nshards", "auto")))) {
     if (check_origfile_modification_earlier<als_edge_type>(base_filename, nshards)) {
-      logstream(LOG_INFO) << "File " << base_filename << " was already preprocessed, won't do it again. " << std::endl;
+      Rcpp::Rcout << "File " << base_filename << " was already preprocessed, won't do it again. " << std::endl;
       FILE * infile = fopen((base_filename + ".gm").c_str(), "r");
       int node_id_maps_size = 0;
       assert( fscanf(infile, "%d\n%d\n%ld\n%d\n%lf\n%d\n%d\n%d\n", &M, &N, &L, &fc.total_features, &globalMean, &node_id_maps_size, &latent_factors_inmem_size,&num_feature_bins_size) ==8);
@@ -257,7 +257,7 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
         load_map_from_txt_file(fc.node_id_maps[i].string2nodeid, buf, 2);
         assert(fc.node_id_maps[i].string2nodeid.size() > 0);
       }
-      logstream(LOG_INFO)<<"Finished loading " << node_id_maps_size << " maps. "<<std::endl;
+      Rcpp::Rcout<<"Finished loading " << node_id_maps_size << " maps. "<<std::endl;
       return nshards;
     }
   }
@@ -270,11 +270,11 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
 
   detect_matrix_size(base_filename, f, M, N, nz, 0, 0, 0);
   if (f == NULL)
-    logstream(LOG_FATAL) << "Could not open file: " << base_filename << ", error: " << strerror(errno) << std::endl;
+    Rcpp::Rcerr << "Could not open file: " << base_filename << ", error: " << strerror(errno) << std::endl;
   if (M == 0 && N == 0)
-    logstream(LOG_FATAL)<<"Failed to detect matrix size. Please prepare a file named: " << base_filename << ":info with matrix market header, as explained here: http://bickson.blogspot.co.il/2012/12/collaborative-filtering-3rd-generation_14.html " << std::endl;
+    Rcpp::Rcerr<<"Failed to detect matrix size. Please prepare a file named: " << base_filename << ":info with matrix market header, as explained here: http://bickson.blogspot.co.il/2012/12/collaborative-filtering-3rd-generation_14.html " << std::endl;
 
-  logstream(LOG_INFO) << "Starting to read matrix-market input. Matrix dimensions: " << M << " x " << N << ", non-zeros: " << nz << std::endl;
+  Rcpp::Rcout << "Starting to read matrix-market input. Matrix dimensions: " << M << " x " << N << ", non-zeros: " << nz << std::endl;
 
 
   if (has_header_titles){
@@ -285,12 +285,12 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
     /* READ LINE */
     int rc = getline(&linebuf, &linesize, f);
     if (rc == -1)
-      logstream(LOG_FATAL)<<"Error header line " << " [ " << linebuf_debug << " ] " << std::endl;
+      Rcpp::Rcerr<<"Error header line " << " [ " << linebuf_debug << " ] " << std::endl;
 
     strncpy(linebuf_debug, linebuf, 1024);
     char *pch = strtok(linebuf,ptokens);
     if (pch == NULL)
-      logstream(LOG_FATAL)<<"Error header line " << " [ " << linebuf_debug << " ] " << std::endl;
+      Rcpp::Rcerr<<"Error header line " << " [ " << linebuf_debug << " ] " << std::endl;
 
     header_titles.push_back(std::string(pch));
 
@@ -317,13 +317,13 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
   {
 
     if (!read_line(f, base_filename, i,I, J, val, valarray, TRAINING, linebuf_debug))
-      logstream(LOG_FATAL)<<"Failed to read line: " <<i<< " in file: " << base_filename << std::endl;
+      Rcpp::Rcerr<<"Failed to read line: " <<i<< " in file: " << base_filename << std::endl;
 
     if (I>= M || J >= N || I < 0 || J < 0){
       if (i == 0)
-        logstream(LOG_FATAL)<<"Failed to parse first line, there are too many tokens. Did you forget the --has_header_titles=1 flag when file has string column headers? [ " << linebuf_debug << " ] " << " I : " << I << " J: " << J << std::endl;
+        Rcpp::Rcerr<<"Failed to parse first line, there are too many tokens. Did you forget the --has_header_titles=1 flag when file has string column headers? [ " << linebuf_debug << " ] " << " I : " << I << " J: " << J << std::endl;
       else 
-        logstream(LOG_FATAL)<<"Problem parsing input line number: " << i <<" in file: " << base_filename << ".  Can not add edge from " << I << " to  J " << J << 
+        Rcpp::Rcerr<<"Problem parsing input line number: " << i <<" in file: " << base_filename << ".  Can not add edge from " << I << " to  J " << J << 
                             " since matrix size is: " << M <<"x" <<N<< " [ original line: " << linebuf_debug << " ] . You probaably need to increase matrix size in the matrix market header." << std::endl;
     }
 
@@ -342,9 +342,9 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
   assert(L > 0);
   //assert(globalMean != 0);
   if (globalMean == 0)
-    logstream(LOG_WARNING)<<"Found global mean of the data to be zero (val_pos). Please verify this is correct." << std::endl;
+    Rcpp::Rcout<<"Found global mean of the data to be zero (val_pos). Please verify this is correct." << std::endl;
   globalMean /= L;
-  logstream(LOG_INFO)<<"Computed global mean is: " << globalMean << std::endl;
+  Rcpp::Rcout<<"Computed global mean is: " << globalMean << std::endl;
   inputGlobalMean = globalMean;
 
   fclose(f);
@@ -352,11 +352,11 @@ int convert_matrixmarket_N(std::string base_filename, bool square, int limit_rat
   if (fc.hash_strings){
     for (int i=0; i< fc.total_features+2; i++){
       if (fc.node_id_maps[i].string2nodeid.size() == 0)
-        logstream(LOG_FATAL)<<"Failed sanity check for feature number : " << i << " no values find in data " << std::endl;
+        Rcpp::Rcerr<<"Failed sanity check for feature number : " << i << " no values find in data " << std::endl;
     }
   }
 
-  logstream(LOG_INFO) << "Now creating shards." << std::endl;
+  Rcpp::Rcout << "Now creating shards." << std::endl;
   // Shard with a specified number of shards, or determine automatically if not defined
   nshards = sharderobj.execute_sharding(get_option_string("nshards", "auto"));
 
@@ -372,18 +372,18 @@ void parse_parser_command_line_arges(){
   file_columns = get_option_int("file_columns", file_columns); //get the number of columns in the edge file
   //input sanity checks
   if (file_columns < 3)
-    logstream(LOG_FATAL)<<"You must have at least 3 columns in input file: [from] [to] [value] on each line"<<std::endl;
+    Rcpp::Rcerr<<"You must have at least 3 columns in input file: [from] [to] [value] on each line"<<std::endl;
   if (file_columns >= FEATURE_WIDTH)
-    logstream(LOG_FATAL)<<"file_columns exceeds the allowed storage limit - please increase FEATURE_WIDTH and recompile." << std::endl;
+    Rcpp::Rcerr<<"file_columns exceeds the allowed storage limit - please increase FEATURE_WIDTH and recompile." << std::endl;
   fc.from_pos = get_option_int("from_pos", fc.from_pos);
   fc.to_pos = get_option_int("to_pos", fc.to_pos);
   fc.val_pos = get_option_int("val_pos", fc.val_pos);
   if (fc.from_pos >= file_columns || fc.to_pos >= file_columns || fc.val_pos >= file_columns)
-    logstream(LOG_FATAL)<<"Please note that column numbering of from_pos, to_pos and val_pos starts from zero and should be smaller than file_columns" << std::endl;
+    Rcpp::Rcerr<<"Please note that column numbering of from_pos, to_pos and val_pos starts from zero and should be smaller than file_columns" << std::endl;
   if (fc.from_pos == fc.to_pos || fc.from_pos == fc.val_pos || fc.to_pos == fc.val_pos)
-    logstream(LOG_FATAL)<<"from_pos, to_pos and val_pos should have different values" << std::endl; 
+    Rcpp::Rcerr<<"from_pos, to_pos and val_pos should have different values" << std::endl; 
   if (fc.val_pos == -1)
-    logstream(LOG_FATAL)<<"you must specify a target column using --val_pos=XXX. Colmn index starts from 0." << std::endl;
+    Rcpp::Rcerr<<"you must specify a target column using --val_pos=XXX. Colmn index starts from 0." << std::endl;
   has_header_titles = get_option_int("has_header_titles", has_header_titles);
   limit_rating= get_option_int("limit_rating", 0); 
   //parse features (optional)
@@ -392,17 +392,17 @@ void parse_parser_command_line_arges(){
     char * pch = strtok(pfeatures, ptokens);
     int node = atoi(pch);
     if (node < 0 || node >= MAX_FEATURES+3)
-      logstream(LOG_FATAL)<<"Feature id using the --features=XX command should be non negative, starting from zero"<<std::endl;
+      Rcpp::Rcerr<<"Feature id using the --features=XX command should be non negative, starting from zero"<<std::endl;
     if (node >= file_columns)
-      logstream(LOG_FATAL)<<"Feature id using the --feature=XX command should be < file_columns (counting starts from zero)" << std::endl;
+      Rcpp::Rcerr<<"Feature id using the --feature=XX command should be < file_columns (counting starts from zero)" << std::endl;
     if (node == fc.from_pos || node == fc.to_pos || node == fc.val_pos)
-      logstream(LOG_FATAL)<<"Feature id " << node << " can not be equal to --from_pos, --to_pos or --val_pos " << std::endl;
+      Rcpp::Rcerr<<"Feature id " << node << " can not be equal to --from_pos, --to_pos or --val_pos " << std::endl;
     fc.feature_selection[node] = true;
     fc.total_features++;
     while ((pch = strtok(NULL, ptokens))!= NULL){
       node = atoi(pch);
       if (node < 0 || node >= MAX_FEATURES+3)
-        logstream(LOG_FATAL)<<"Feature id using the --features=XX command should be non negative, starting from zero"<<std::endl;
+        Rcpp::Rcerr<<"Feature id using the --features=XX command should be non negative, starting from zero"<<std::endl;
       fc.feature_selection[node] = true;
       fc.total_features++;
     }
@@ -418,18 +418,18 @@ void parse_parser_command_line_arges(){
     char * pch = strtok(pfeatures, ptokens);
     int node = atoi(pch);
     if (node < 0 || node >= MAX_FEATURES+3)
-      logstream(LOG_FATAL)<<"Feature id using the --real_features=XX command should be non negative, starting from zero"<<std::endl;
+      Rcpp::Rcerr<<"Feature id using the --real_features=XX command should be non negative, starting from zero"<<std::endl;
     if (node >= file_columns)
-      logstream(LOG_FATAL)<<"Feature id using the --real_feature=XX command should be < file_columns (counting starts from zero)" << std::endl;
+      Rcpp::Rcerr<<"Feature id using the --real_feature=XX command should be < file_columns (counting starts from zero)" << std::endl;
     if (node == fc.from_pos || node == fc.to_pos || node == fc.val_pos)
-      logstream(LOG_FATAL)<<"Feature id " << node << " can not be equal to --from_pos, --to_pos or --val_pos " << std::endl;
+      Rcpp::Rcerr<<"Feature id " << node << " can not be equal to --from_pos, --to_pos or --val_pos " << std::endl;
     fc.real_features_indicators[node] = true;
     fc.feature_positions[node] = i;
     i++;
     while ((pch = strtok(NULL, ptokens))!= NULL){
       node = atoi(pch);
       if (node < 0 || node >= MAX_FEATURES+3)
-        logstream(LOG_FATAL)<<"Feature id using the --real_features=XX command should be non negative, starting from zero"<<std::endl;
+        Rcpp::Rcerr<<"Feature id using the --real_features=XX command should be non negative, starting from zero"<<std::endl;
       fc.real_features_indicators[node] = true;
       fc.feature_positions[node] = i;
       i++;

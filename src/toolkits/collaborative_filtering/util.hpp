@@ -50,7 +50,7 @@ struct out_file{
 /*
 template<typename T1>
 void load_map_from_txt_file(T1 & map, const std::string filename, bool gzip, int fields){
-   logstream(LOG_INFO)<<"loading map from txt file: " << filename << std::endl;
+   Rcpp::Rcout<<"loading map from txt file: " << filename << std::endl;
    gzip_in_file fin(filename, gzip);
    char linebuf[1024]; 
    char saveptr[1024];
@@ -63,7 +63,7 @@ void load_map_from_txt_file(T1 & map, const std::string filename, bool gzip, int
         break;
 
       if (linebuf[0] == '%'){
-        logstream(LOG_INFO)<<"Detected matrix market header: " << linebuf << " skipping" << std::endl;
+        Rcpp::Rcout<<"Detected matrix market header: " << linebuf << " skipping" << std::endl;
         mm_header = true;
         continue;
       }
@@ -74,19 +74,19 @@ void load_map_from_txt_file(T1 & map, const std::string filename, bool gzip, int
          
       char *pch = strtok_r(linebuf," \r\n\t",(char**)&saveptr);
       if (!pch){
-        logstream(LOG_FATAL) << "Error when parsing file: " << filename << ":" << line <<std::endl;
+        Rcpp::Rcerr << "Error when parsing file: " << filename << ":" << line <<std::endl;
        }
        if (fields == 2){
          pch2 = strtok_r(NULL,"\n",(char**)&saveptr);
          if (!pch2)
-            logstream(LOG_FATAL) << "Error when parsing file: " << filename << ":" << line <<std::endl;
+            Rcpp::Rcerr << "Error when parsing file: " << filename << ":" << line <<std::endl;
        }
       if (fields == 1)
         map[boost::lexical_cast<std::string>(line)] = pch;
       else map[pch] = pch2;
       line++;
    }
-   logstream(LOG_INFO)<<"Map size is: " << map.size() << std::endl;
+   Rcpp::Rcout<<"Map size is: " << map.size() << std::endl;
  }*/
 
 

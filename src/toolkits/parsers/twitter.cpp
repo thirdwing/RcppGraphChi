@@ -144,7 +144,7 @@ bool extract_user_name(const char * linebuf, size_t line, int i, char * saveptr,
   pch = strtok_r(NULL,user_chars_tokens,&saveptr); //COM
   if (!pch){ logstream(LOG_ERROR) << "Error when parsing file: " << in_files[i] << ":" << line << "[" << linebuf << "]" << std::endl; return false; }
   pch = strtok_r(NULL,user_chars_tokens,&saveptr); //USERNAME
-  if (!pch){ logstream(LOG_WARNING) << "Error when parsing file: " << in_files[i] << ":" << line << "[" << linebuf << "]" << std::endl; missing_names++; return false; }
+  if (!pch){ Rcpp::Rcout << "Error when parsing file: " << in_files[i] << ":" << line << "[" << linebuf << "]" << std::endl; missing_names++; return false; }
   for (uint j=0; j< strlen(pch); j++) pch[j] = tolower(pch[j]); //make user name lower
   strncpy(userid, pch, 256);
   return true;
@@ -314,7 +314,7 @@ void parse(int i){
 
 int main(int argc,  const char *argv[]) {
 
-  logstream(LOG_WARNING)<<"GraphChi parsers library is written by Danny Bickson (c). Send any "
+  Rcpp::Rcout<<"GraphChi parsers library is written by Danny Bickson (c). Send any "
     " comments or bug reports to danny.bickson@gmail.com " << std::endl;
   global_logger().set_log_level(LOG_INFO);
   global_logger().set_log_to_console(true);

@@ -32,7 +32,6 @@
 #define DEF_STRIPEDIO_HPP
 
 #include <iostream> 
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
@@ -40,11 +39,10 @@
 #include <pthread.h>
 #include <errno.h>
 #include <sys/mman.h>
-
-
 #include <vector>
 
-#include "logger/logger.hpp"
+#include <Rcpp.h>
+
 #include "metrics/metrics.hpp"
 #include "util/synchronized_queue.hpp"
 #include "util/ioutil.hpp"
@@ -167,8 +165,8 @@ namespace graphchi {
         
         ~block_cache() {
             if (hits + misses > 0) {
-                logstream(LOG_INFO) << "Cache stats: hits=" << hits << " misses=" << misses << std::endl;
-                logstream(LOG_INFO) << " -- in total had " << (cache_size / 1024 / 1024) << " MB in cache." << std::endl;
+                Rcpp::Rcout << "Cache stats: hits=" << hits << " misses=" << misses << std::endl;
+                Rcpp::Rcout << " -- in total had " << (cache_size / 1024 / 1024) << " MB in cache." << std::endl;
             }
             std::map<std::string, cached_block *>::iterator it = cachemap.begin();
             for(; it != cachemap.end(); ++it) {
@@ -186,7 +184,7 @@ namespace graphchi {
                     cache_size += len;
                     did_cache = true;
                     if (cachemap.size() % 40 == 0) {
-                        logstream(LOG_DEBUG) << "Cache size: " << cache_size << " / " << cache_budget_bytes << std::endl;
+                        Rcpp::Rcout << "Cache size: " << cache_size << " / " << cache_budget_bytes << std::endl;
                     }
                     cachemap.insert(std::pair<std::string, cached_block*>(filename, new cached_block(len, data, was_compresssed)));
                 }
@@ -256,7 +254,7 @@ namespace graphchi {
             multiplex = get_option_int("multiplex", 1);
             if (multiplex>1) {
                 multiplex_root = get_option_string("multiplex_root", "<not-set>");
-                logstream(LOG_FATAL) << "Multiplexing files is currently not supported! Let akyrola@cs.cmu.edu know if you need this support :)." << std::endl;
+                Rcpp::stop("Multiplexing files is currently not supported! Let akyrola@cs.cmu.edu know if you need this support :).\n");
                 assert(multiplex == 1);
             } else {
                 multiplex_root = "";
@@ -268,7 +266,7 @@ namespace graphchi {
             niothreads = get_option_int("niothreads", 1);
             m.set("niothreads", (size_t)niothreads);
        
-            logstream(LOG_DEBUG) << "Start io-manager with " << niothreads << " threads." << std::endl;
+            Rcpp::Rcout << "Start io-manager with " << niothreads << " threads." << std::endl;
 
             // Each multiplex partition has its own queues
             mplex_readtasks = new synchronized_queue<iotask>[multiplex * niothreads];
@@ -401,7 +399,7 @@ namespace graphchi {
                 std::string fname = multiplexprefix(i) + filename;
                 for(int j=0; j<niothreads+(multiplex == 1 ? 1 : 0); j++) { // Hack to have one fd for synchronous
                     int rddesc = open(fname.c_str(), (readonly ? O_RDONLY : O_RDWR));
-                    if (rddesc < 0) logstream(LOG_ERROR)  << "Could not open: " << fname << " session: " << session_id
+                    if (rddesc < 0) Rcpp::Rcerr  << "Could not open: " << fname << " session: " << session_id
                         << " error: " << strerror(errno) << std::endl;
                     assert(rddesc>=0);
                     iodesc->readdescs.push_back(rddesc);
@@ -412,7 +410,7 @@ namespace graphchi {
                     if (!readonly) {
                         int wrdesc = rddesc; // Change by Aapo: Aug 11, 2012. I don't think we need separate wrdesc?
 
-                        if (wrdesc < 0) logstream(LOG_ERROR)  << "Could not open for writing: " << fname << " session: " << session_id
+                        if (wrdesc < 0) Rcpp::Rcerr  << "Could not open for writing: " << fname << " session: " << session_id
                             << " error: " << strerror(errno) << std::endl;
                         assert(wrdesc>=0);
 #ifdef F_NOCACHE
@@ -643,7 +641,7 @@ namespace graphchi {
             assert(multiplex <= 1);  // We do not support truncating on multiplex yet
             int stat = ftruncate(sessions[session]->writedescs[0], nbytes); 
             if (stat != 0) {
-                logstream(LOG_ERROR) << "Could not truncate " << sessions[session]->filename <<
+                Rcpp::Rcerr << "Could not truncate " << sessions[session]->filename <<
                 " error: " << strerror(errno) << std::endl;
                 assert(false);
             }
@@ -697,13 +695,13 @@ namespace graphchi {
             mmaplock.lock();
             
             if (mmaped.find(cachekey) == mmaped.end()) {
-                logstream(LOG_DEBUG) << "Mmap: " << filename << std::endl;
+                Rcpp::Rcout << "Mmap: " << filename << std::endl;
                 /* Not mmaped yet, so open */
                 size_t mmap_length = get_filesize(filename);
                 int filedesc = open(filename.c_str(), (write ? O_RDWR : O_RDONLY));
                 ptr =  mmap(NULL, mmap_length, (write ? PROT_READ | PROT_WRITE : PROT_READ), MAP_SHARED, filedesc, 0);
                 if (!ptr) {
-                    logstream(LOG_FATAL) << "Could not mmap " << filename << std::endl;
+                    Rcpp::stop("Could not mmap files\n");
                 }
                 assert(ptr);
                 mmap_info minfo;
@@ -725,7 +723,7 @@ namespace graphchi {
         iotask task;
         thrinfo * info = (thrinfo*)_info;
         int ntasks = 0;
-        // logstream(LOG_INFO) << "Thread for multiplex :" << info->mplex << " starting." << std::endl;
+        // Rcpp::Rcout << "Thread for multiplex :" << info->mplex << " starting." << std::endl;
         while(info->running) {
             bool success;
             if (info->pending_reads>0) {  // Prioritize read queue
@@ -783,7 +781,7 @@ namespace graphchi {
                 usleep(50000); // 50 ms
             }
         }
-        // logstream(LOG_INFO) << "I/O thread exists. Handled " << ntasks << " i/o tasks." << std::endl;
+        // Rcpp::Rcout << "I/O thread exists. Handled " << ntasks << " i/o tasks." << std::endl;
         return NULL;
     }
     
@@ -794,7 +792,7 @@ namespace graphchi {
         int f = open(fname.c_str(), O_RDONLY);
         
         if (f < 0) {
-            logstream(LOG_ERROR) << "Could not open file " << filename << " error: " << strerror(errno) << std::endl;
+            Rcpp::Rcerr << "Could not open file " << filename << " error: " << strerror(errno) << std::endl;
             assert(false);
         }
         

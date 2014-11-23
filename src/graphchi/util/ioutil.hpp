@@ -33,7 +33,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <zlib.h>
- 
+
+#include <Rcpp.h>
 
 // Reads given number of bytes to a buffer
 template <typename T>
@@ -89,7 +90,7 @@ void pwritea(int f, T * tbuf, size_t nbytes, size_t off) {
     while(nwritten<nbytes) {
         size_t a = pwrite(f, buf, nbytes-nwritten, off+nwritten);
         if (a == size_t(-1)) {
-            logstream(LOG_ERROR) << "f:" << f << " nbytes: " << nbytes << " written: " << nwritten << " off:" << 
+            Rcpp::Rcerr << "f:" << f << " nbytes: " << nbytes << " written: " << nwritten << " off:" << 
                 off << " f: " << f << " error:" <<  strerror(errno) << std::endl;
             assert(false);
         }
@@ -107,11 +108,11 @@ void checkarray_filesize(std::string fname, size_t nelements) {
     // Check the vertex file is correct size
     int f = open(fname.c_str(),  O_RDWR | O_CREAT, S_IROTH | S_IWOTH | S_IWUSR | S_IRUSR);
     if (f < 1) {
-        logstream(LOG_ERROR) << "Error initializing the data-file: " << fname << " error:" <<  strerror(errno) << std::endl;    }
+        Rcpp::Rcerr << "Error initializing the data-file: " << fname << " error:" <<  strerror(errno) << std::endl;    }
     assert(f>0);
     int err = ftruncate(f, nelements * sizeof(T));
     if (err != 0) {
-        logstream(LOG_ERROR) << "Error in adjusting file size: " << fname << " to size: " << nelements * sizeof(T)    
+        Rcpp::Rcerr << "Error in adjusting file size: " << fname << " to size: " << nelements * sizeof(T)    
                  << " error:" <<  strerror(errno) << std::endl;
     }
     assert(err == 0);
@@ -126,7 +127,7 @@ void writea(int f, T * tbuf, size_t nbytes) {
         size_t a = write(f, buf, nbytes-nwritten);
         assert(a>0);
         if (a == size_t(-1)) {
-            logstream(LOG_ERROR) << "Could not write " << (nbytes-nwritten) << " bytes!" << " error:" <<  strerror(errno) << std::endl;
+            Rcpp::Rcerr << "Could not write " << (nbytes-nwritten) << " bytes!" << " error:" <<  strerror(errno) << std::endl;
             assert(false);
         }
         buf += a;

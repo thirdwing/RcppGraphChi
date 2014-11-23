@@ -107,7 +107,7 @@ void parse(int i){
 
 int main(int argc,  const char *argv[]) {
 
-  logstream(LOG_WARNING)<<"GraphChi parsers library is written by Danny Bickson (c). Send any "
+  Rcpp::Rcout<<"GraphChi parsers library is written by Danny Bickson (c). Send any "
     " comments or bug reports to danny.bickson@gmail.com " << std::endl;
   global_logger().set_log_level(LOG_INFO);
   global_logger().set_log_to_console(true);

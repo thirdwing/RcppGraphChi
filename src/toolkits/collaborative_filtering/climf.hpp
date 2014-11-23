@@ -95,7 +95,7 @@ double g(double x)
 
   if (std::isinf(ret) || std::isnan(ret))
   {
-    logstream(LOG_FATAL) << "overflow in g()" << std::endl;
+    Rcpp::Rcerr << "overflow in g()" << std::endl;
   }
 
   return ret;
@@ -108,7 +108,7 @@ double dg(double x)
 
   if (std::isinf(ret) || std::isnan(ret))
   {
-    logstream(LOG_FATAL) << "overflow in dg()" << std::endl;
+    Rcpp::Rcerr << "overflow in dg()" << std::endl;
   }
 
   return ret;

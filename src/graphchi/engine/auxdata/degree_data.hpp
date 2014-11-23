@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
+#include <Rcpp.h>
+
 #include "graphchi_types.hpp"
 #include "io/stripedio.hpp"
 
@@ -94,7 +96,7 @@ namespace graphchi {
             this->base_filename = base_filename;
             use_mmap = get_option_int("mmap", 0);  // Whether to mmap the degree file to memory
             if (use_mmap) {
-                logstream(LOG_INFO) << "Use memory mapping for degree data." << std::endl;
+                Rcpp::Rcout << "Use memory mapping for degree data." << std::endl;
             }
             open_file(base_filename);
         }

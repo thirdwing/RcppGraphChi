@@ -37,10 +37,9 @@
 #include <fstream>
 #include <iostream>
 
-
+#include <Rcpp.h>
 
 #include "graphchi_types.hpp"
-#include "logger/logger.hpp"
 #include "preprocessing/sharder.hpp"
 
 /**
@@ -147,8 +146,7 @@ namespace graphchi {
     // Catch all
     template <typename T>
     void parse(T &x, const char * s) {
-        logstream(LOG_FATAL) << "You need to define parse<your-type>(your-type &x, const char *s) function"
-        << " to support parsing the edge value." << std::endl;
+        Rcpp::stop("You need to define parse<your-type>(your-type &x, const char *s) function to support parsing the edge value.\n");
         assert(false);
     }
     
@@ -214,16 +212,17 @@ namespace graphchi {
         size_t bytesread = 0;
         size_t linenum = 0;
         if (inf == NULL) {
-            logstream(LOG_FATAL) << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+            Rcpp::Rcout << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+            Rcpp::stop("");
         }
         assert(inf != NULL);
         
-        logstream(LOG_INFO) << "Reading in edge list format!" << std::endl;
+        Rcpp::Rcout << "Reading in edge list format!" << std::endl;
         char s[1024];
         while(fgets(s, 1024, inf) != NULL) {
             linenum++;
             if (linenum % 10000000 == 0) {
-                logstream(LOG_DEBUG) << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
+                Rcpp::Rcout << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
             }
             FIXLINE(s);
             bytesread += strlen(s);
@@ -234,7 +233,7 @@ namespace graphchi {
             char * t;
             t = strtok(s, delims);
             if (t == NULL) {
-                logstream(LOG_ERROR) << "Input file is not in right format. "
+                Rcpp::Rcout << "Input file is not in right format. "
                 << "Expecting \"<from>\t<to>\". "
                 << "Current line: \"" << s << "\"\n";
                 assert(false);
@@ -242,7 +241,7 @@ namespace graphchi {
             vid_t from = atoi(t);
             t = strtok(NULL, delims);
             if (t == NULL) {
-                logstream(LOG_ERROR) << "Input file is not in right format. "
+                Rcpp::Rcout << "Input file is not in right format. "
                 << "Expecting \"<from>\t<to>\". "
                 << "Current line: \"" << s << "\"\n";
                 assert(false);
@@ -272,14 +271,14 @@ namespace graphchi {
                 if (from != to) {
                     if (vals.size() == 0) {
                         // TODO: go around this problem
-                        logstream(LOG_FATAL) << "Each edge needs at least one value." << std::endl;
+                        Rcpp::stop("Each edge needs at least one value.\n");
                         assert(vals.size() > 0);
                     }
                     sharderobj.preprocessing_add_edge_multival(from, to, vals);
                 }
                 
 #else
-                logstream(LOG_FATAL) << "To support multivalue-edges, dynamic edge data needs to be used." << std::endl;
+                Rcpp::stop("To support multivalue-edges, dynamic edge data needs to be used.\n");
                 assert(false);
 #endif
             }
@@ -297,10 +296,11 @@ namespace graphchi {
     void convert_adjlist(std::string inputfile, sharder<EdgeDataType, FinalEdgeDataType> &sharderobj) {
         FILE * inf = fopen(inputfile.c_str(), "r");
         if (inf == NULL) {
-            logstream(LOG_FATAL) << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+            Rcpp::Rcout << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+            Rcpp::stop("");
         }
         assert(inf != NULL);
-        logstream(LOG_INFO) << "Reading in adjacency list format!" << std::endl;
+        Rcpp::Rcout << "Reading in adjacency list format!" << std::endl;
         
         int maxlen = 100000000;
         char * s = (char*) malloc(maxlen);
@@ -314,7 +314,7 @@ namespace graphchi {
         while(fgets(s, maxlen, inf) != NULL) {
             linenum++;
             if (bytesread - lastlog >= 500000000) {
-                logstream(LOG_DEBUG) << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
+                Rcpp::Rcout << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
                 lastlog = bytesread;
             }
             FIXLINE(s);
@@ -336,7 +336,7 @@ namespace graphchi {
                     i++;
                 }
                 if (num != i) {
-                    logstream(LOG_ERROR) << "Mismatch when reading adjacency list: " << num << " != " << i << " s: " << std::string(s)
+                    Rcpp::Rcout << "Mismatch when reading adjacency list: " << num << " != " << i << " s: " << std::string(s)
                     << " on line: " << linenum << std::endl;
                     continue;
                 }
@@ -385,7 +385,8 @@ namespace graphchi {
         std::ifstream graphFile(inputPath.c_str());
 
         if (! graphFile.good()) {
-            logstream(LOG_FATAL) << "Could not load :" << inputPath << " error: " << strerror(errno) << std::endl;
+            Rcpp::Rcout << "Could not load :" << inputPath << " error: " << strerror(errno) << std::endl;
+            Rcpp::stop("");
         }
         
         std::string line; // current line
@@ -408,14 +409,14 @@ namespace graphchi {
             } if (tokens.size() == 3) {
                 weighted = tokens[2];
                 if (weighted != 0) {
-                    logstream(LOG_FATAL) << "node and edge weights currently not supported by parser" << std::endl;
+                    Rcpp::stop("node and edge weights currently not supported by parser.\n");
                 }
             }
         } else {
-            logstream(LOG_FATAL) << "getting METIS file header failed" << std::endl;
+            Rcpp::stop("getting METIS file header failed.\n");
         }
 
-        logstream(LOG_INFO) << "reading graph with n=" << n << ", m=" << m << std::endl;
+        Rcpp::Rcout << "reading graph with n=" << n << ", m=" << m << std::endl;
 
         vid_t u = 0; // starting node index
 
@@ -466,10 +467,11 @@ namespace graphchi {
                 std::cout << "Process: " << inputfile << std::endl;
                 FILE * inf = fopen(inputfile.c_str(), "r");
                 if (inf == NULL) {
-                    logstream(LOG_FATAL) << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+                    Rcpp::Rcout << "Could not load :" << inputfile << " error: " << strerror(errno) << std::endl;
+                    Rcpp::stop("");
                 }
                 assert(inf != NULL);
-                logstream(LOG_INFO) << "Reading in cassovary format!" << std::endl;
+                Rcpp::Rcout << "Reading in cassovary format!" << std::endl;
                 
                 int maxlen = 100000000;
                 char * s = (char*) malloc(maxlen);
@@ -482,7 +484,7 @@ namespace graphchi {
                 while(fgets(s, maxlen, inf) != NULL) {
                     linenum++;
                     if (bytesread - lastlog >= 500000000) {
-                        logstream(LOG_DEBUG) << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
+                        Rcpp::Rcout << "Read " << linenum << " lines, " << bytesread / 1024 / 1024.  << " MB" << std::endl;
                         lastlog = bytesread;
                     }
                     FIXLINE(s);
@@ -615,7 +617,7 @@ namespace graphchi {
         std::string file_type_str = get_option_string_interactive("filetype", "edgelist, adjlist, binedgelist, metis");
         if (file_type_str != "adjlist" && file_type_str != "edgelist"  && file_type_str != "binedgelist" &&
             file_type_str != "multivalueedgelist" && file_type_str != "metis") {
-            logstream(LOG_ERROR) << "You need to specify filetype: 'edgelist',  'adjlist', 'binedgelist', or 'metis'." << std::endl;
+            Rcpp::Rcout << "You need to specify filetype: 'edgelist',  'adjlist', 'binedgelist', or 'metis'." << std::endl;
             assert(false);
         }
         
@@ -647,8 +649,8 @@ namespace graphchi {
         }
         
         int nshards = sharderobj.execute_sharding(nshards_string);
-        logstream(LOG_INFO) << "Successfully finished sharding for " << basefilename << std::endl;
-        logstream(LOG_INFO) << "Created " << nshards << " shards." << std::endl;
+        Rcpp::Rcout << "Successfully finished sharding for " << basefilename << std::endl;
+        Rcpp::Rcout << "Created " << nshards << " shards." << std::endl;
         return nshards;
     }
     
@@ -664,7 +666,7 @@ namespace graphchi {
         
         std::string file_type_str = get_option_string_interactive("filetype", "edgelist, adjlist, cassovary, binedgelist");
         if (file_type_str != "adjlist" && file_type_str != "edgelist" && file_type_str != "cassovary"  && file_type_str != "binedgelist" && file_type_str != "metis") {
-            logstream(LOG_ERROR) << "You need to specify filetype: 'edgelist' or 'adjlist'." << std::endl;
+            Rcpp::Rcout << "You need to specify filetype: 'edgelist' or 'adjlist'." << std::endl;
             assert(false);
         }
         
@@ -697,8 +699,8 @@ namespace graphchi {
         }
         
         int nshards = sharderobj.execute_sharding(nshards_string);
-        logstream(LOG_INFO) << "Successfully finished sharding for " << basefilename  << std::endl;
-        logstream(LOG_INFO) << "Created " << nshards << " shards." << std::endl;
+        Rcpp::Rcout << "Successfully finished sharding for " << basefilename  << std::endl;
+        Rcpp::Rcout << "Created " << nshards << " shards." << std::endl;
         return nshards;
     }
     
@@ -708,7 +710,7 @@ namespace graphchi {
         
         /* Check if input file is already sharded */
         if ((nshards = find_shards<EdgeDataType>(basefilename, nshards_string))) {
-            logstream(LOG_INFO) << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
+            Rcpp::Rcout << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
             didexist = true;
             if (check_origfile_modification_earlier<EdgeDataType>(basefilename, nshards)) {
                 return nshards;
@@ -717,10 +719,10 @@ namespace graphchi {
         }
         didexist = false;
         
-        logstream(LOG_INFO) << "Did not find preprocessed shards for " << basefilename << std::endl;
+        Rcpp::Rcout << "Did not find preprocessed shards for " << basefilename << std::endl;
         
-        logstream(LOG_INFO) << "(Edge-value size: " << sizeof(EdgeDataType) << ")" << std::endl;
-        logstream(LOG_INFO) << "Will try create them now..." << std::endl;
+        Rcpp::Rcout << "(Edge-value size: " << sizeof(EdgeDataType) << ")" << std::endl;
+        Rcpp::Rcout << "Will try create them now..." << std::endl;
         nshards = convert<dummyC<EdgeDataType>, EdgeDataType>(basefilename, nshards_string);
         return nshards;
     }
@@ -731,7 +733,7 @@ namespace graphchi {
         
         /* Check if input file is already sharded */
         if ((nshards = find_shards<EdgeDataType>(basefilename, nshards_string))) {
-            logstream(LOG_INFO) << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
+            Rcpp::Rcout << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
             didexist = true;
             if (check_origfile_modification_earlier<EdgeDataType>(basefilename, nshards)) {
                 return nshards;
@@ -740,10 +742,10 @@ namespace graphchi {
         }
         didexist = false;
         
-        logstream(LOG_INFO) << "Did not find preprocessed shards for " << basefilename  << std::endl;
+        Rcpp::Rcout << "Did not find preprocessed shards for " << basefilename  << std::endl;
         
-        logstream(LOG_INFO) << "(Edge-value size: " << sizeof(EdgeDataType) << ")" << std::endl;
-        logstream(LOG_INFO) << "Will try create them now..." << std::endl;
+        Rcpp::Rcout << "(Edge-value size: " << sizeof(EdgeDataType) << ")" << std::endl;
+        Rcpp::Rcout << "Will try create them now..." << std::endl;
         nshards = convert<EdgeDataType, EdgeDataType>(basefilename, nshards_string);
         return nshards;
     }
@@ -755,7 +757,7 @@ namespace graphchi {
         
         /* Check if input file is already sharded */
         if ((nshards = find_shards<FinalEdgeType>(basefilename, nshards_string))) {
-            logstream(LOG_INFO) << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
+            Rcpp::Rcout << "Found preprocessed files for " << basefilename << ", num shards=" << nshards << std::endl;
             didexist = true;
             if (check_origfile_modification_earlier<FinalEdgeType>(basefilename, nshards)) {
                 return nshards;
@@ -764,9 +766,9 @@ namespace graphchi {
         }
         didexist = false;
         
-        logstream(LOG_INFO) << "Did not find preprocessed shards for " << basefilename  << std::endl;
-        logstream(LOG_INFO) << "(Edge-value size: " << sizeof(FinalEdgeType) << ")" << std::endl;
-        logstream(LOG_INFO) << "Will try create them now..." << std::endl;
+        Rcpp::Rcout << "Did not find preprocessed shards for " << basefilename  << std::endl;
+        Rcpp::Rcout << "(Edge-value size: " << sizeof(FinalEdgeType) << ")" << std::endl;
+        Rcpp::Rcout << "Will try create them now..." << std::endl;
         nshards = convert<EdgeDataType, FinalEdgeType>(basefilename, nshards_string);
         return nshards;
     }

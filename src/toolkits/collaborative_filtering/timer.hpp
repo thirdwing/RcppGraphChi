@@ -49,7 +49,7 @@
    * graphlab::timer timer;
    * timer.start();
    * // do something
-   * std::cout << "Elapsed time: " << timer.current_time() << std::endl; 
+   * Rcpp::Rcout << "Elapsed time: " << timer.current_time() << std::endl; 
    * \endcode
    *
    * Fast approximate time

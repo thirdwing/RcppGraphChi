@@ -44,9 +44,10 @@
 #include <assert.h>
 #include <string>
 
+#include <Rcpp.h>
+
 #include "api/graph_objects.hpp"
 #include "metrics/metrics.hpp"
-#include "logger/logger.hpp"
 #include "io/stripedio.hpp"
 #include "graphchi_types.hpp"
 
@@ -210,7 +211,7 @@ namespace graphchi {
             adjfilesize = get_filesize(filename_adj);
             if (!only_adjacency) {
                 edatafilesize = get_shard_edata_filesize<ET>(filename_edata);
-                logstream(LOG_DEBUG) << "Total edge data size: " << edatafilesize  << ", " << filename_edata
+                Rcpp::Rcout << "Total edge data size: " << edatafilesize  << ", " << filename_edata
                 << "sizeof(ET): " << sizeof(ET) << std::endl;
             } else {
                 // Nothing
@@ -247,7 +248,7 @@ namespace graphchi {
         
         // Init edge data blocks
         void initdata() {
-            logstream(LOG_DEBUG) << "Initialize edge data: " << filename_edata << std::endl;
+            Rcpp::Rcout << "Initialize edge data: " << filename_edata << std::endl;
             ET * initblock = (ET *) malloc(blocksize);
             for(int i=0; i < (int) (blocksize/sizeof(ET)); i++) initblock[i] = ET();
             for(size_t off=0; off < edatafilesize; off += blocksize) {
@@ -279,7 +280,7 @@ namespace graphchi {
             indexentry closest_offset = lowerbd_iter->second;
             assert(closest_vid <= (int)v);
             if (closest_vid > (int)curvid) {   /* Note: this will fail if we have over 2B vertices! */
-                logstream(LOG_DEBUG)
+                Rcpp::Rcout
                 << "Sliding shard, start: " << range_st << " moved to: " << closest_vid << " " << closest_offset.adjoffset << ", asked for : " << v << " was in: curvid= " << curvid  << " " << adjoffset << std::endl;
                 
                 if (curblock != NULL) // Move the pointer - this may invalidate the curblock, but it is being checked later
@@ -458,7 +459,7 @@ namespace graphchi {
                             vertex.add_outedge(target, evalue, special_edge);
                             
                             if (!((target >= range_st && target <= range_end))) {
-                                logstream(LOG_ERROR) << "Error : " << target << " not in [" << range_st << " - " << range_end << "]" << std::endl;
+                                Rcpp::Rcerr << "Error : " << target << " not in [" << range_st << " - " << range_end << "]" << std::endl;
                                 iomgr->print_session(adjfile_session);
                             }
                             assert(target >= range_st && target <= range_end);

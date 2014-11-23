@@ -249,8 +249,6 @@ Eigen::VectorXd large_svd(std::string matrix_file)
     std::string vecfile = "";
     debug = 0;
 
-    global_logger().set_log_level(LOG_WARNING);
-
     if (nv < nsv)
     {
         Rcpp::stop("Please set the number of vectors to be at least the number of support vectors!\n");
