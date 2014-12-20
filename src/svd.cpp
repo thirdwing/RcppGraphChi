@@ -14,23 +14,19 @@ using namespace std;
      and other information. Currently required. */
 metrics m("svd-inmemory-factors");
 
-struct vertex_data
-{
+struct vertex_data {
     vec pvec;
     double value;
     double A_ii;
-    vertex_data()
-    {
+    vertex_data() {
         value = 0;
         A_ii = 1;
     }
 
-    void set_val(int field_type, double value)
-    {
+    void set_val(int field_type, double value) {
         pvec[field_type] = value;
     }
-    double get_val(int field_type)
-    {
+    double get_val(int field_type) {
         return pvec[field_type];
     }
     //double get_output(int field_type){ return pred_x; }
@@ -52,8 +48,7 @@ std::vector<vertex_data> latent_factors_inmem;
 #include "toolkits/collaborative_filtering/rmse_engine.hpp"
 #include "toolkits/collaborative_filtering/math.hpp"
 
-void init_lanczos(bipartite_graph_descriptor & info, int & data_size, int & nsv, int & nv, int & max_iter, int & actual_vector_len)
-{
+void init_lanczos(bipartite_graph_descriptor & info, int & data_size, int & nsv, int & nv, int & max_iter, int & actual_vector_len) {
     srand48(time(NULL));
     latent_factors_inmem.resize(info.total());
     data_size = nsv + nv+1 + max_iter;
@@ -61,18 +56,16 @@ void init_lanczos(bipartite_graph_descriptor & info, int & data_size, int & nsv,
         data_size *= 2;
     actual_vector_len = data_size;
     #pragma omp parallel for
-    for (int i=0; i< info.total(); i++)
-    {
+    for (int i=0; i< info.total(); i++) {
         latent_factors_inmem[i].pvec = zeros(actual_vector_len);
     }
-    
+
 }
 
 
 vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
-             const std::string & vecfile, int & nconv, int & data_size, int & nv, 
-             int & nsv, int & max_iter, double & tol, bool &finished)
-{
+             const std::string & vecfile, int & nconv, int & data_size, int & nv,
+             int & nsv, int & max_iter, double & tol, bool &finished) {
 
     int its = 1;
     DistMat A(info);
@@ -88,10 +81,9 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
     DistDouble vnorm = norm(v_0);
     v_0=v_0/vnorm;
 
-    while(nconv < nsv && its < max_iter)
-    {
+    while(nconv < nsv && its < max_iter) {
         Rcpp::Rcout<<"Starting iteration: " << its << " at time: " << mytimer.current_time() << std::endl;
-        
+
         int k = nconv;
         int n = nv;
 
@@ -102,8 +94,7 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
         orthogonalize_vs_all(U, k, alpha(0));
 
-        for (int i=k+1; i<n; i++)
-        {
+        for (int i=k+1; i<n; i++) {
             Rcpp::Rcout <<"Starting step: " << i << " at time: " << mytimer.current_time() <<  std::endl;
 
             V[i]=U[i-1]*A;
@@ -136,47 +127,40 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
         //estiamte the error
 
         int kk = 0;
-        for (int i=nconv; i < nv; i++)
-        {
+        for (int i=nconv; i < nv; i++) {
             int j = i-nconv;
 
             sigma(i) = alpha(j);
 
             errest(i) = abs(a(n-1,j)*beta(n-1));
 
-            if (alpha(j) >  tol)
-            {
+            if (alpha(j) >  tol) {
                 errest(i) = errest(i) / alpha(j);
 
             }
-            if (errest(i) < tol)
-            {
+            if (errest(i) < tol) {
                 kk = kk+1;
 
             }
 
-            if (nconv +kk >= nsv)
-            {
+            if (nconv +kk >= nsv) {
                 finished = true;
             }
         }//end for
 
         vec v;
-        if (!finished)
-        {
+        if (!finished) {
             vec swork=get_col(PT,kk);
 
             v = zeros(size(A,1));
-            for (int ttt=nconv; ttt < nconv+n; ttt++)
-            {
+            for (int ttt=nconv; ttt < nconv+n; ttt++) {
                 v = v+swork(ttt-nconv)*(V[ttt].to_vec());
             }
 
         }
 
         //compute the ritz eigenvectors of the converged singular triplets
-        if (kk > 0)
-        {
+        if (kk > 0) {
             mat tmp= V.get_cols(nconv,nconv+n)*PT;
             V.set_cols(nconv, nconv+kk, get_cols(tmp, 0, kk));
 
@@ -195,13 +179,12 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
     } // end(while)
 
-	Rcpp::Rcout << "Number of computed signular values: " << nconv << std::endl;
-	
+    Rcpp::Rcout << "Number of computed signular values: " << nconv << std::endl;
+
     DistVec normret(info, nconv, false, "normret");
     DistVec normret_tranpose(info, nconv, true, "normret_tranpose");
 
-    for (int i=0; i < std::min(nsv,nconv); i++)
-    {
+    for (int i=0; i < std::min(nsv,nconv); i++) {
         normret = V[i]*A._transpose() -U[i]*sigma(i);
         double n1 = norm(normret).toDouble();
 
@@ -210,27 +193,23 @@ vec lanczos( bipartite_graph_descriptor & info, timer & mytimer, vec & errest,
 
         double err=sqrt(n1*n1+n2*n2);
 
-        if (sigma(i)>tol)
-        {
+        if (sigma(i)>tol) {
             err = err/sigma(i);
         }
-		
+
     }
 
     return sigma;
 }
 
-
-
 // [[Rcpp::export]]
-Eigen::VectorXd large_svd(std::string matrix_file)
-{
+Eigen::VectorXd large_svd(std::string matrix_file) {
     int nshards;
     int nconv = 0;
 
     vec singular_values;
 
-	//LANCZOS VARIABLES
+    //LANCZOS VARIABLES
     int max_iter = 5;
     int actual_vector_len;
     int nv = 5;
@@ -242,17 +221,15 @@ Eigen::VectorXd large_svd(std::string matrix_file)
     std::string format = "matrixmarket";
     int nodes = 0;
     int data_size = max_iter;
-
+    bipartite_graph_descriptor info;
 
     graphchi_init();
 
     std::string vecfile = "";
     debug = 0;
 
-    if (nv < nsv)
-    {
+    if (nv < nsv) {
         Rcpp::stop("Please set the number of vectors to be at least the number of support vectors!\n");
-        
     }
 
     training = matrix_file;
@@ -261,7 +238,7 @@ Eigen::VectorXd large_svd(std::string matrix_file)
     if (tokens_per_row == 3 || tokens_per_row == 2)
         nshards = convert_matrixmarket<EdgeDataType>(training,0,0,tokens_per_row);
     else
-		Rcpp::stop("--tokens_per_row should be either 2 or 3 input columns\n");
+        Rcpp::stop("--tokens_per_row should be either 2 or 3 input columns\n");
 
     info.rows = M;
     info.cols = N;
@@ -273,8 +250,7 @@ Eigen::VectorXd large_svd(std::string matrix_file)
     init_math(info, ortho_repeats);
 
     //read initial vector from file (optional)
-    if (vecfile.size() > 0)
-    {
+    if (vecfile.size() > 0) {
         Rcpp::Rcout << "Load inital vector from file" << vecfile << std::endl;
         load_matrix_market_vector(vecfile, 0, true, false);
     }
@@ -288,6 +264,6 @@ Eigen::VectorXd large_svd(std::string matrix_file)
     singular_values.conservativeResize(nconv);
     Rcpp::Rcout << "Lanczos finished, time used: " << mytimer.current_time() << std::endl;
 
-	return singular_values;
+    return singular_values;
 
 }
